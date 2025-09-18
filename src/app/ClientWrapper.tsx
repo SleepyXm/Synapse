@@ -1,28 +1,40 @@
 "use client";
 
-import { ReactNode, Children, isValidElement, cloneElement, useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { ReactNode, useState, useEffect } from "react";
 import Navbar from "./components/AxonNav";
 import { checkAuth } from "./components/auth";
+import React from "react";
+import Profile from "./Profile/page";
 
 type ClientWrapperProps = {
-  children: ReactNode; // <- allow any valid ReactNode
+  children: ReactNode;
 };
 
+type User = {
+  username: string;
+}
+
 export default function ClientWrapper({ children }: ClientWrapperProps) {
-  const pathname = usePathname();
-  const [user, setUser] = useState<boolean | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    checkAuth().then(setUser);
+    setMounted(true);
+    checkAuth().then((userObj) => setUser(userObj));
   }, []);
-
-  const showNav = pathname.startsWith("/");
 
   return (
     <>
-      {showNav && user !== null && <Navbar user={user} />}
-      {children}
+      {mounted && <Navbar user={user} />}      
+      {mounted && window.location.pathname === "/Profile" ? (
+        <Profile user={user} />
+      ) : (
+        React.Children.map(children, (child) =>
+          React.isValidElement(child)
+            ? React.cloneElement(child as React.ReactElement<any>, { user })
+            : child
+        )
+      )}
     </>
   );
 }

@@ -2,11 +2,8 @@
 
 import Image from "next/image";
 import ModelExplorer from "./components/Search";
-import { Manrope } from "next/font/google";
-import { motion, easeOut, TargetAndTransition } from "framer-motion";
+import { motion, easeOut } from "framer-motion";
 import AuraBackground7 from "./components/background7";
-
-const manrope = Manrope({ subsets: ["latin"], weight: ["400", "200"] });
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },

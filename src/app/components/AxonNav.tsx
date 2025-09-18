@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { FaCalendarAlt } from "react-icons/fa"; // only if needed for dropdown icons
 import { logout } from "./auth";
 
-const Navbar = ({ user }: { user: boolean }) => {
+type User = {
+  username: string;
+  tagline?: string;
+};
+
+const Navbar = ({ user }: { user:  User | null }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const links = [
@@ -11,18 +16,16 @@ const Navbar = ({ user }: { user: boolean }) => {
     { label: "Stuff", url: "/alsobullshit" },
     ...(user
       ? [
+        {
+          label: "Profile",
+          url: "/Profile"
+        },
           {
-            label: "Log-out",
-            onClick: async () => {
-              await logout();
-            },
+            label: "Log-out", onClick: async () => { await logout();},
           },
         ]
       : [
-          {
-            label: "Log-in",
-            url: "/login",
-          },
+          { label: "Log-in", url: "/login", },
         ]),
   ];
   // Desktop links

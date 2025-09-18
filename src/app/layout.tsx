@@ -36,7 +36,6 @@ export default function RootLayout({
         className={`${manrope.className} antialiased`}
       >
         <ClientWrapper>
-
           {children}
         </ClientWrapper>
       </body>

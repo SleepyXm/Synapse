@@ -15,15 +15,15 @@ async function request(path: string, options: RequestInit) {
   return data;
 }
 
-export async function checkAuth(): Promise<boolean> {
+export async function checkAuth(): Promise<any | null> {
   try {
     const data = await request("/auth/me", {
       method: "GET",
-      credentials: "include", // send cookies
+      credentials: "include",
     });
-    return !!data.username; // true if backend returned a user
+    return data.username ? data : null;
   } catch {
-    return false; // any error → not logged in
+    return null;
   }
 }
 
@@ -40,14 +40,13 @@ export async function login(username: string, password: string) {
     body: JSON.stringify({ username, password }),
   });
 
-  const isLoggedIn = await checkAuth();
+  const userObj = await request("/auth/me", { method: "GET", credentials: "include" });
   
-  return { ...res, isLoggedIn}
+  return { ...res, user: userObj };
 }
 
 export async function logout() {
   await request("/auth/logout", { method: "POST" });
-  return checkAuth();
 
 }
 
