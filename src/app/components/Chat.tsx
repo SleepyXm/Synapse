@@ -38,8 +38,9 @@ export default function Chat() {
   const modelId = `${params.author}/${params.model}`;
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [ isFav, setIsFav ] = useState(false);
 
-  const CHUNK_SIZE = 5; // 5 pairs = 10 messages
+  const CHUNK_SIZE = 5;
   let currentChunk: Message[] = [];
 
   const sendMessage = async () => {
@@ -48,16 +49,16 @@ export default function Chat() {
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
 
-    // Push user message to chunk and LocalStorage immediately
+    
     currentChunk.push(userMessage);
 
-    // === FIXED: accumulate messages instead of overwriting ===
+    
     const existingTempUser = JSON.parse(
       localStorage.getItem("currentChunkTemp") || "[]"
     );
     existingTempUser.push(userMessage);
     localStorage.setItem("currentChunkTemp", JSON.stringify(existingTempUser));
-    // ==========================================================
+    
 
     setInput("");
 
@@ -84,7 +85,7 @@ export default function Chat() {
         if (value) {
           partial += decoder.decode(value, { stream: true });
 
-          // Update UI only
+          
           setMessages((prev) => {
             const newMessages = [...prev];
             const lastMsg = newMessages[newMessages.length - 1];
@@ -100,14 +101,14 @@ export default function Chat() {
         }
       }
 
-      // After stream finishes, push final assistant message to chunk and LocalStorage
+      
       const finalAssistantMessage: Message = {
         role: "assistant",
         content: partial,
       };
       currentChunk.push(finalAssistantMessage);
 
-      // === FIXED: accumulate messages instead of overwriting ===
+      
       const existingTempAssistant = JSON.parse(
         localStorage.getItem("currentChunkTemp") || "[]"
       );
@@ -116,11 +117,11 @@ export default function Chat() {
         "currentChunkTemp",
         JSON.stringify(existingTempAssistant)
       );
-      // ==========================================================
+     
 
-      // If chunk limit reached, move to conversationChunks and reset
       if (currentChunk.length >= CHUNK_SIZE * 2) {
-        // 5 pairs = 10 messages
+        
+
         const existingChunks = JSON.parse(
           localStorage.getItem("conversationChunks") || "[]"
         );
@@ -134,7 +135,7 @@ export default function Chat() {
           JSON.stringify(existingChunks)
         );
 
-        // Reset chunk and temp storage
+        
         currentChunk = [];
         localStorage.removeItem("currentChunkTemp");
       }
@@ -145,12 +146,12 @@ export default function Chat() {
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex flex-col w-full max-w-[30vw] h-[80vh] mt-16">
-      {/* Header */}
+
       <h2 className="text-xl font-bold mt-4 text-white text-center">
         {params.model}
       </h2>
 
-      {/* Messages */}
+
       <div className="flex-1 overflow-y-auto px-2 pb-2 mb-2 flex flex-col mt-4">
         {messages.map((m, i) => (
           <div
@@ -172,7 +173,6 @@ export default function Chat() {
         ))}
       </div>
 
-      {/* Input row */}
       <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/10">
         <input
           type="text"
@@ -206,7 +206,7 @@ export default function Chat() {
         </button>
       </div>
 
-      {/* Tips */}
+
       <div className="px-2 pb-2 mt-2">
         <p className="mt-2 text-[11px] text-gray-500">
           Tip: Press Enter to send
