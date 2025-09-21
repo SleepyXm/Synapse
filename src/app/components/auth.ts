@@ -21,7 +21,16 @@ export async function checkAuth(): Promise<any | null> {
       method: "GET",
       credentials: "include",
     });
-    return data.username ? data : null;
+
+    // Keep everything else exactly as it was
+    if (!data.username) return null;
+
+    // Only change: ensure hf_token exists as an array
+    if (!data.hf_token) {
+      data.hf_token = data.hf_tokens || [];
+    }
+
+    return data;
   } catch {
     return null;
   }
@@ -55,6 +64,30 @@ export function getProtected(path: string) {
   return request(path, { method: "GET" });
 }
 
+export async function addHfToken(token: string): Promise<string[]> {
+  const res = await request("/auth/hf_token", {
+    method: "POST",
+    body: JSON.stringify({ hf_token: token }),
+    credentials: "include",
+  });
+
+  if (!res) throw new Error("Failed to add HF token");
+
+  return res.hf_token ?? [];
+}
+
+export async function deleteHfToken(token: string): Promise<string[]> {
+  const res = await request("/auth/hf_token", {
+    method: "DELETE",
+    body: JSON.stringify({ hf_token: token }),
+    credentials: "include",
+  });
+
+  // assume server returns the new list or at least a success flag
+  if (!res) throw new Error("Failed to delete HF token");
+
+  return res.hf_token ?? []; // fallback to empty array if undefined
+}
 /*
 export async function pushToBackend(messages: Message[]) {
     await fetch("/llm/chat/conversation", {

@@ -25,6 +25,9 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class HFTokenRequest(BaseModel):
+    hf_token: str
+
 class UserOut(BaseModel):
     id: str
     username: str

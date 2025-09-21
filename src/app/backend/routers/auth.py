@@ -5,7 +5,8 @@ from passlib.context import CryptContext
 from database import database
 from routers.auth_utils import create_access_token, get_current_user
 import uuid
-from schemas import UserCreate, UserLogin
+from schemas import UserCreate, UserLogin, HFTokenRequest
+import json
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -64,13 +65,56 @@ async def login(user: UserLogin, response: Response):
         domain="localhost",
     )
 
-    # Return the correct token in response
+
     return resp
 
 @router.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
-    # Returns 401 automatically if no valid cookie
-    return {"username": current_user["username"]}
+    query = "SELECT username, hf_tokens FROM users WHERE id = :user_id"
+    db_user = await database.fetch_one(query=query, values={"user_id": current_user["id"]})
+
+    # Ensure hf_tokens is returned as a list
+    try:
+        hf_tokens_list = json.loads(db_user["hf_tokens"]) if db_user["hf_tokens"] else []
+    except Exception:
+        hf_tokens_list = []
+
+    return {
+        "username": db_user["username"],
+        "hf_token": hf_tokens_list,
+    }
+
+@router.post("/hf_token")
+async def add_hf_token(req: HFTokenRequest, current_user: dict = Depends(get_current_user)):
+    query = "SELECT hf_tokens FROM users WHERE id = :user_id"
+    db_user = await database.fetch_one(query=query, values={"user_id": current_user["id"]})
+    current_tokens = json.loads(db_user["hf_tokens"]) if db_user["hf_tokens"] else []
+
+    if req.hf_token in current_tokens:
+        raise HTTPException(status_code=400, detail="Token already exists")
+
+    current_tokens.append(req.hf_token)
+    update_query = "UPDATE users SET hf_tokens = :hf_tokens WHERE id = :user_id"
+    await database.execute(query=update_query, values={"hf_tokens": json.dumps(current_tokens), "user_id": current_user["id"]})
+
+    return {"message": "HF Token added successfully", "hf_tokens": current_tokens}
+
+
+@router.delete("/hf_token")
+async def remove_hf_token(req: HFTokenRequest, current_user: dict = Depends(get_current_user)):
+    query = "SELECT hf_tokens FROM users WHERE id = :user_id"
+    db_user = await database.fetch_one(query=query, values={"user_id": current_user["id"]})
+    current_tokens = json.loads(db_user["hf_tokens"]) if db_user["hf_tokens"] else []
+
+    if req.hf_token not in current_tokens:
+        raise HTTPException(status_code=404, detail="Token not found")
+
+    current_tokens.remove(req.hf_token)
+    update_query = "UPDATE users SET hf_tokens = :hf_tokens WHERE id = :user_id"
+    await database.execute(query=update_query, values={"hf_tokens": json.dumps(current_tokens), "user_id": current_user["id"]})
+
+    return {"message": "HF Token deleted successfully", "hf_tokens": current_tokens}
+
 
 @router.post("/logout")
 async def logout(response: Response):

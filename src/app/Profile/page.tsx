@@ -1,17 +1,19 @@
 "use client";
 import AuraBackground7 from "@/app/components/background7";
 import { logout } from "@/app/components/auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useUser } from "../components/UserProvider";
+import { addHfToken, deleteHfToken } from "@/app/components/auth";
 
-type User = {
-  username: string;
-  password: string;
-  hf_token: string;
-  email?: string;
-};
-
-export default function Profile({ user }: { user: User | null }) {
+export default function Profile() {
   const [activeTab, setActiveTab] = useState("account");
+  const { user } = useUser();
+  const [hfTokens, setHfTokens] = useState<string[]>([]);
+  const [newToken, setNewToken] = useState("");
+
+  useEffect(() => {
+    if (user?.hf_token) setHfTokens(user.hf_token);
+  }, [user?.hf_token]);
 
   if (!user) return <div>Loading...</div>;
 
@@ -21,9 +23,7 @@ export default function Profile({ user }: { user: User | null }) {
     <div className="bg-gray-800/70 min-h-screen flex justify-center items-start pt-[10vh] relative">
       <AuraBackground7 />
       <div className="w-[80%] h-[85vh] rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-6 shadow-2xl flex gap-6">
-        {/* Left sidebar */}
         <div className="w-48 flex flex-col items-center border-r border-white/10 pr-4 gap-6">
-          {/* Profile picture */}
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-xl font-medium text-white">
               {username[0].toUpperCase()}
@@ -31,7 +31,6 @@ export default function Profile({ user }: { user: User | null }) {
             <div className="text-white text-sm mt-1">{username}</div>
           </div>
 
-          {/* Tabs */}
           <div className="flex flex-col w-full gap-2">
             <button
               className={`w-full px-4 py-2 text-left rounded-md ${
@@ -113,14 +112,16 @@ export default function Profile({ user }: { user: User | null }) {
           </div>
         </div>
 
-        {/* Right content area */}
         <div className="flex-1 overflow-auto flex flex-col gap-4 text-white">
           {activeTab === "account" && (
             <>
-            <h2 className="text-3xl font-semibold text-white mt-6">Account Information</h2>
+              <h2 className="text-3xl font-semibold text-white mt-6">
+                Account Information
+              </h2>
+
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
                 <span className="font-medium">Username:</span>
-                <span>{username}</span>
+                <span>{user.username}</span>
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
@@ -130,19 +131,65 @@ export default function Profile({ user }: { user: User | null }) {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                <span>{email || <em>Add your email</em>}</span>
+                <span>{user.email || <em>Add your email</em>}</span>
               </div>
 
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token}</span>
+              <div className="flex flex-col bg-white/5 p-3 rounded-md gap-2 mt-4">
+                <span className="font-medium">HF Tokens:</span>
+
+                <div className="flex flex-col gap-1 max-w-[100%]">
+                  {hfTokens.length ? (
+                    hfTokens.map((token, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between bg-white/10 p-1 rounded-md"
+                      >
+                        <span className="truncate">{token}</span>
+                        <button
+                          onClick={() => {
+                            deleteHfToken(token); // backend call
+                            setHfTokens((prev) =>
+                              prev.filter((t) => t !== token)
+                            ); // update local state
+                          }}
+                          className="text-red-500 hover:text-red-600 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <em>No HF Tokens added</em>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 mt-2 max-w-[100%]">
+                  <input
+                    type="text"
+                    placeholder="Add your HF Token"
+                    className="flex-1 bg-white/10 p-1 rounded-md text-white text-sm"
+                    value={newToken}
+                    onChange={(e) => setNewToken(e.target.value)}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!newToken.trim()) return;
+                      addHfToken(newToken); // backend call
+                      setHfTokens((prev) => [...prev, newToken]); // update local state
+                      setNewToken(""); // clear input
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded-md text-white text-sm"
+                  >
+                    Add
+                  </button>
+                </div>
               </div>
             </>
           )}
 
           {activeTab === "models" && (
             <>
-            <h2 className="text-3xl font-semibold text-white mt-6">Models</h2>
+              <h2 className="text-3xl font-semibold text-white mt-6">Models</h2>
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
                 <span className="font-medium">Username:</span>
                 <span>{username}</span>
@@ -166,7 +213,9 @@ export default function Profile({ user }: { user: User | null }) {
           )}
           {activeTab === "sessions" && (
             <>
-            <h2 className="text-3xl font-semibold text-white mt-6">Sessions</h2>
+              <h2 className="text-3xl font-semibold text-white mt-6">
+                Sessions
+              </h2>
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
                 <span className="font-medium">Username:</span>
                 <span>{username}</span>
@@ -190,7 +239,9 @@ export default function Profile({ user }: { user: User | null }) {
           )}
           {activeTab === "billing" && (
             <>
-            <h2 className="text-3xl font-semibold text-white mt-6">Billing</h2>
+              <h2 className="text-3xl font-semibold text-white mt-6">
+                Billing
+              </h2>
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
                 <span className="font-medium">Username:</span>
                 <span>{username}</span>
@@ -215,7 +266,7 @@ export default function Profile({ user }: { user: User | null }) {
 
           {activeTab === "data" && (
             <>
-            <h2 className="text-3xl font-semibold text-white mt-6">Data</h2>
+              <h2 className="text-3xl font-semibold text-white mt-6">Data</h2>
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
                 <span className="font-medium">Username:</span>
                 <span>{username}</span>
@@ -240,7 +291,9 @@ export default function Profile({ user }: { user: User | null }) {
 
           {activeTab === "personalization" && (
             <>
-            <h2 className="text-3xl font-semibold text-white mt-6">Personalization</h2>
+              <h2 className="text-3xl font-semibold text-white mt-6">
+                Personalization
+              </h2>
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
                 <span className="font-medium">Username:</span>
                 <span>{username}</span>

@@ -1,13 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useContext } from "react";
+import { UserContext } from "./UserProvider";
 import { FaCalendarAlt } from "react-icons/fa"; // only if needed for dropdown icons
 import { logout } from "./auth";
 
-type User = {
-  username: string;
-  tagline?: string;
-};
-
-const Navbar = ({ user }: { user:  User | null }) => {
+const Navbar = () => {
+  const { user } = useContext(UserContext)!;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const links = [

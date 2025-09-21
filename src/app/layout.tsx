@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import ClientWrapper from "./ClientWrapper";
 import { Manrope } from "next/font/google";
+import ClientWrapper from "./ClientWrapper";
+import { UserProvider } from "./components/UserProvider"; // <-- assumed done
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,17 +28,15 @@ const manrope = Manrope({
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>){
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className={`${manrope.className} antialiased`}
-      >
-        <ClientWrapper>
-          {children}
-        </ClientWrapper>
+      <body className={`${manrope.className} antialiased`}>
+        <UserProvider>
+          <ClientWrapper>
+            {children}
+          </ClientWrapper>
+        </UserProvider>
       </body>
     </html>
   );
