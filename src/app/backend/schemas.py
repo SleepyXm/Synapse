@@ -34,5 +34,9 @@ class UserOut(BaseModel):
     password: str
     created_at: datetime
 
+class FavLLM(BaseModel):
+    llm_id: str
+    user_id: str
+
     class Config:
         orm_mode = True

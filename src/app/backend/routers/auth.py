@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from database import database
 from routers.auth_utils import create_access_token, get_current_user
 import uuid
-from schemas import UserCreate, UserLogin, HFTokenRequest
+from schemas import UserCreate, UserLogin, HFTokenRequest, FavLLM
 import json
 
 router = APIRouter()
@@ -115,9 +115,14 @@ async def remove_hf_token(req: HFTokenRequest, current_user: dict = Depends(get_
 
     return {"message": "HF Token deleted successfully", "hf_tokens": current_tokens}
 
+@router.post("/add_fav")
+async def add_fav(req: FavLLM, current_user: dict = Depends(get_current_user)):
+    query = "SELECT name FROM llms WHERE id = :llm_id"
+    db_user = await database.fetch_one(query=query, values={""})
+
 
 @router.post("/logout")
 async def logout(response: Response):
     # Clear cookies/session here
-    response.delete_cookie("access_token")  # or however you handle sessions
+    response.delete_cookie("access_token") 
     return {"message": "Logged out successfully"}

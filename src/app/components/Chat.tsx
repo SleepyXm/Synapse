@@ -3,6 +3,7 @@ import { useParams } from "next/navigation";
 import rehypeHighlight from "rehype-highlight";
 import ReactMarkdown from "react-markdown";
 
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -39,6 +40,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [ isFav, setIsFav ] = useState(false);
+
 
   const CHUNK_SIZE = 5;
   let currentChunk: Message[] = [];
@@ -147,8 +149,14 @@ export default function Chat() {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex flex-col w-full max-w-[30vw] h-[80vh] mt-16">
 
-      <h2 className="text-xl font-bold mt-4 text-white text-center">
+      <h2 className="text-xl font-bold mt-4 text-white text-center flex items-center justify-center gap-2">
         {params.model}
+        <button
+        onClick={() => setIsFav(!isFav)}
+        className="text-white text-l cursor-pointer bg-transparent border-none"
+      >
+        {isFav ? '★' : '☆'}
+      </button>
       </h2>
 
 

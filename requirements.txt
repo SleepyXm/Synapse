@@ -1,0 +1,9 @@
+passlib
+python-jose[cryptography]
+python-jose
+PyJWT
+databases
+fastapi
+pydantic
+asyncpg
+bcrypt
