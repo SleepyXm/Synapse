@@ -4,7 +4,7 @@ import { emitConversationSelected } from "../hooks/conversation";
 
 export default function Conversation() {
   const { conversations } = useConversations();
-  const [activeConversationId, setActiveConversationId] = useState<
+  const [activeConversationId] = useState<
     string | null
   >(null);
 
@@ -31,7 +31,7 @@ export default function Conversation() {
               conv.id
             )}`}
             onClick={() => {
-              emitConversationSelected(conv.id); // emit the selected conversation
+              emitConversationSelected(conv.id);
             }}
           >
             {conv.id}

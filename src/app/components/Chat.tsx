@@ -13,7 +13,8 @@ import {
 export default function Chat() {
   const params = useParams();
   const modelId = `${params.author}/${params.model}`;
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [loadedMessages, setLoadedMessages] = useState<Message[]>([]);
+  const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isFav, setIsFav] = useState(false);
 
@@ -22,12 +23,17 @@ export default function Chat() {
     string | null
   >(null);
 
-  useEffect(() => {
+   useEffect(() => {
     onConversationSelected(async (id) => {
       const msgs = await fetchConversations(id);
-      setMessages(msgs);
+      setLoadedMessages(msgs);
+      setCurrentMessages([]);
+      setCurrentConversationId(id);
     });
   }, []);
+
+  const allMessages = [...loadedMessages, ...currentMessages];
+  
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex flex-col w-full max-w-[30vw] h-[80vh] mt-16">
@@ -42,7 +48,7 @@ export default function Chat() {
       </h2>
 
       <div className="flex-1 overflow-y-auto px-2 pb-2 mb-2 flex flex-col mt-4">
-        {messages.map((m, i) => (
+         {allMessages.map((m, i) => (
           <div
             key={m.id ?? i}
             className={`my-1 p-2 rounded inline-block max-w-[70%] break-words mt-8 rounded-xl ${
@@ -52,9 +58,7 @@ export default function Chat() {
             }`}
           >
             {(m.message?.role ?? m.role) === "user" ? (
-              <div className="whitespace-pre-wrap">
-                {m.message?.content ?? m.content}
-              </div>
+              <div className="whitespace-pre-wrap">{m.message?.content ?? m.content}</div>
             ) : (
               <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
                 {m.message?.content ?? m.content}
@@ -74,8 +78,8 @@ export default function Chat() {
             sendMessage({
               input,
               setInput,
-              messages,
-              setMessages,
+              messages: currentMessages,
+              setMessages: setCurrentMessages,
               currentConversationId,
               setCurrentConversationId,
               currentChunk,
@@ -91,8 +95,8 @@ export default function Chat() {
             sendMessage({
               input,
               setInput,
-              messages,
-              setMessages,
+              messages: currentMessages,
+              setMessages: setCurrentMessages,
               currentConversationId,
               setCurrentConversationId,
               currentChunk,
