@@ -133,7 +133,7 @@ async def create_conversation(
     now = datetime.utcnow()
     query_insert = """
         INSERT INTO conversations (id, user_id, llm_model, title, created_at, updated_at)
-        VALUES (:id, :user_id, :llm_model, :title :created_at, :updated_at)
+        VALUES (:id, :user_id, :llm_model, :title, :created_at, :updated_at)
     """
     await database.execute(
         query=query_insert,
