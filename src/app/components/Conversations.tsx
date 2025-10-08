@@ -34,7 +34,7 @@ export default function Conversation() {
               emitConversationSelected(conv.id);
             }}
           >
-            {conv.id}
+            {conv.title}
           </div>
         ))
       )}

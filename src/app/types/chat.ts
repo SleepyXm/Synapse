@@ -20,6 +20,7 @@ export interface ChatContextType {
 
 export interface ConversationItem {
   id: string;
+  title: string;
   llm_model: string;
 }
 

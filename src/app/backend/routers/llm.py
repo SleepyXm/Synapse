@@ -70,6 +70,29 @@ async def chat_stream(req: ChatRequest):
     return StreamingResponse(event_generator(), media_type="text/plain")
 
 
+def generate_conversation_title(model_id: str, conversation_text: str) -> str:
+
+    messages = [
+        {
+            "role": "system",
+            "content": "You are an assistant that creates short, descriptive titles for conversations."
+        },
+        {
+            "role": "user",
+            "content": f"Generate a concise title for this conversation: {conversation_text}"
+        }
+    ]
+
+    response = client.chat.completions.create(
+        model=model_id,
+        messages=messages,
+        max_tokens=12,
+    )
+    title = response.choices[0].message.content.strip()
+    return title
+
+
+
 # 1. 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
 # 2. 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
 # 3. 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

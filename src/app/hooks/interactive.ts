@@ -50,7 +50,7 @@ export const sendMessage = async ({
       const conv = await createConversation(defaultTitle, modelId);
       setCurrentConversationId(conv.id); // update state
 
-      // Immediately fetch its messages (probably empty, but keeps UI consistent)
+      // Immediately fetch messages (probably empty, but keeps UI consistent)
       const messages = await fetchConversations(conv.id);
       setMessages(messages); // pre-populate UI with loaded messages
     } catch (err) {
