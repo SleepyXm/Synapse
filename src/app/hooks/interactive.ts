@@ -20,82 +20,51 @@ export const handleFavClick = async (
   }
 };
 
-export const sendMessage = async ({
-  input,
-  setInput,
-  messages,
-  setMessages,
-  currentConversationId,
-  setCurrentConversationId,
-  currentChunk,
-  modelId,
-  hfToken,
-}: {
-  input: string;
-  setInput: React.Dispatch<React.SetStateAction<string>>;
-  messages: Message[];
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  currentConversationId: string | null;
-  setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
-  currentChunk: React.MutableRefObject<Message[]>;
-  modelId: string;
-  hfToken: string;
-}) => {
-  if (!input.trim()) return;
+async function ensureConversation(
+  currentConversationId: string | null,
+  setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>,
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  modelId: string
+) {
+  if (currentConversationId) return currentConversationId;
 
-  // Ensure we have a conversation ID
-  let conversationId = currentConversationId;
-  if (!currentConversationId) {
-    // Create a new conversation
-    const defaultTitle = `Conversation ${new Date().toLocaleString()}`;
-    try {
-      const conv = await createConversation(defaultTitle, modelId);
-      setCurrentConversationId(conv.id); // update state
-      conversationId = conv.id;
+  const defaultTitle = `Conversation ${new Date().toLocaleString()}`;
+  const conv = await createConversation(defaultTitle, modelId);
+  setCurrentConversationId(conv.id);
 
-      // Immediately fetch messages (probably empty, but keeps UI consistent)
-      const messages = await fetchConversations(conv.id);
-      setMessages(messages); // pre-populate UI with loaded messages
-    } catch (err) {
-      console.error(err);
-      return;
-    }
-  }
+  const messages = await fetchConversations(conv.id);
+  setMessages(messages);
 
-  // Append user message
+  return conv.id;
+}
+
+
+function appendUserMessage(
+  input: string,
+  setInput: React.Dispatch<React.SetStateAction<string>>,
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  currentChunk: React.MutableRefObject<Message[]>
+) {
   const userMessage: Message = { role: "user", content: input };
-  setMessages((prev) => [...prev, userMessage]);
+  setMessages(prev => [...prev, userMessage]);
   currentChunk.current.push(userMessage);
   setInput("");
+  return userMessage;
+}
 
-  // Flush chunk if threshold reached
-  if (currentChunk.current.length >= 5 && conversationId) {
-    try {
-      await fetch(
-        `http://localhost:8000/conversation/${conversationId}/chunk`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(currentChunk.current),
-        }
-      );
-      currentChunk.current = [];
-    } catch (err) {
-      console.error("Error flushing chunk:", err);
-    }
-  }
-
-  // Stream assistant response
+async function streamAssistantResponse(
+  conversationId: string,
+  conversation: Message[],
+  modelId: string,
+  hfToken: string,
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  currentChunk: React.MutableRefObject<Message[]>
+) {
   try {
     const response = await fetch(`http://localhost:8000/llm/chat/stream?conversation_id=${conversationId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        modelId,
-        hfToken,
-        conversation: [...messages, userMessage],
-      }),
+      body: JSON.stringify({ modelId, hfToken, conversation }),
     });
 
     if (!response.body) throw new Error("No response body");
@@ -111,7 +80,7 @@ export const sendMessage = async ({
       if (value) {
         partial += decoder.decode(value, { stream: true });
 
-        setMessages((prev) => {
+        setMessages(prev => {
           const newMessages = [...prev];
           const lastMsg = newMessages[newMessages.length - 1];
           if (lastMsg?.role === "assistant") {
@@ -124,28 +93,50 @@ export const sendMessage = async ({
       }
     }
 
-    // Push final assistant message into the chunk
     const assistantMessage: Message = { role: "assistant", content: partial };
     currentChunk.current.push(assistantMessage);
+    await flushChunk(conversationId, currentChunk);
 
-    // Always flush after assistant finishes
-    if (conversationId) {
-      try {
-        await fetch(
-          `http://localhost:8000/conversation/${conversationId}/chunk`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify(currentChunk.current),
-          }
-        );
-        currentChunk.current = [];
-      } catch (err) {
-        console.error("Error flushing chunk after assistant:", err);
-      }
-    }
   } catch (err) {
     console.error("Error streaming assistant:", err);
   }
+}
+
+async function flushChunk(conversationId: string, currentChunk: React.MutableRefObject<Message[]>) {
+  if (!conversationId || currentChunk.current.length === 0) return;
+  
+  try {
+    await fetch(`http://localhost:8000/conversation/${conversationId}/chunk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(currentChunk.current),
+    });
+    currentChunk.current = [];
+  } catch (err) {
+    console.error("Error flushing chunk:", err);
+  }
+}
+
+export const sendMessage = async (args: {
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  currentConversationId: string | null;
+  setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
+  currentChunk: React.MutableRefObject<Message[]>;
+  modelId: string;
+  hfToken: string;
+}) => {
+  const { input, setInput, messages, setMessages, currentConversationId, setCurrentConversationId, currentChunk, modelId, hfToken } = args;
+  if (!input.trim()) return;
+
+  const conversationId = await ensureConversation(currentConversationId, setCurrentConversationId, setMessages, modelId);
+
+  const userMessage = appendUserMessage(input, setInput, setMessages, currentChunk);
+
+  if (currentChunk.current.length >= 5) await flushChunk(conversationId, currentChunk);
+
+  await streamAssistantResponse(conversationId, [...messages, userMessage], modelId, hfToken, setMessages, currentChunk);
 };

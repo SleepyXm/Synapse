@@ -41,32 +41,7 @@ export const fetchConversations = async (conversationId: string) => {
   }
 };
 
-/*
-useEffect(() => {
-    if (!currentConversationId) return;
 
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch(
-          `http://localhost:8000/conversations/${currentConversationId}/chunk`,
-          {
-            credentials: "include",
-          }
-        );
-
-        if (!res.ok) throw new Error("Failed to fetch messages");
-
-        const data = await res.json();
-        setMessages(data.messages); // decompressed messages go straight into state
-        currentChunk.current = data.messages; // optional, keep ref updated
-      } catch (err) {
-        console.error("Error fetching messages:", err);
-      }
-    };
-
-    fetchMessages();
-  }, [currentConversationId]);
-*/
 
 const conversationBus = new EventTarget();
 
