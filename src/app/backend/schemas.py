@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, List
 from uuid import UUID
 
 class UserCreate(BaseModel):
@@ -37,6 +37,7 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     modelId: str
+    hfToken: str
     conversation: list[Message]
 
 
@@ -48,3 +49,10 @@ class MessageOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class MessageChunkOut(BaseModel):
+    messages: List[MessageOut]
+
+class CreateConversationRequest(BaseModel):
+    title: str
+    llm_model: str

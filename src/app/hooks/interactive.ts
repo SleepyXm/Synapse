@@ -29,6 +29,7 @@ export const sendMessage = async ({
   setCurrentConversationId,
   currentChunk,
   modelId,
+  hfToken,
 }: {
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
@@ -38,6 +39,7 @@ export const sendMessage = async ({
   setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
   currentChunk: React.MutableRefObject<Message[]>;
   modelId: string;
+  hfToken: string;
 }) => {
   if (!input.trim()) return;
 
@@ -91,6 +93,7 @@ export const sendMessage = async ({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         modelId,
+        hfToken,
         conversation: [...messages, userMessage],
       }),
     });

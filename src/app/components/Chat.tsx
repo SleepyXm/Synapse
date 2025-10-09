@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { handleFavClick } from "@/app/hooks/interactive";
 import { Message } from "../types/chat";
 import { sendMessage } from "@/app/hooks/interactive";
+import { useHfTokens } from "@/app/handlers/tokenhandler";
 import {
   onConversationSelected,
   fetchConversations,
@@ -17,13 +18,24 @@ export default function Chat() {
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isFav, setIsFav] = useState(false);
+  const { listHfTokens } = useHfTokens();
+  const [hfTokens, setHfTokens] = useState<string[]>(listHfTokens());
+  const [activeToken, setActiveToken] = useState("");
+
 
   const currentChunk = useRef<Message[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | null
   >(null);
 
-   useEffect(() => {
+  useEffect(() => {
+    const tokens = listHfTokens();
+    setHfTokens(tokens);
+    setActiveToken(tokens[0] ?? "");
+  }, [listHfTokens]);
+
+
+  useEffect(() => {
     onConversationSelected(async (id) => {
       const msgs = await fetchConversations(id);
       setLoadedMessages(msgs);
@@ -33,7 +45,6 @@ export default function Chat() {
   }, []);
 
   const allMessages = [...loadedMessages, ...currentMessages];
-  
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex flex-col w-full max-w-[30vw] h-[80vh] mt-16">
@@ -48,7 +59,7 @@ export default function Chat() {
       </h2>
 
       <div className="flex-1 overflow-y-auto px-2 pb-2 mb-2 flex flex-col mt-4">
-         {allMessages.map((m, i) => (
+        {allMessages.map((m, i) => (
           <div
             key={m.id ?? i}
             className={`my-1 p-2 rounded inline-block max-w-[70%] break-words mt-8 rounded-xl ${
@@ -58,7 +69,9 @@ export default function Chat() {
             }`}
           >
             {(m.message?.role ?? m.role) === "user" ? (
-              <div className="whitespace-pre-wrap">{m.message?.content ?? m.content}</div>
+              <div className="whitespace-pre-wrap">
+                {m.message?.content ?? m.content}
+              </div>
             ) : (
               <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
                 {m.message?.content ?? m.content}
@@ -67,6 +80,20 @@ export default function Chat() {
           </div>
         ))}
       </div>
+
+      {hfTokens.length > 0 && (
+        <select
+          value={activeToken}
+          onChange={(e) => setActiveToken(e.target.value)}
+          className="bg-white/10 text-white p-1 rounded text-sm mb-2"
+        >
+          {hfTokens.map((t, i) => (
+            <option key={i} value={t}>
+              {t.slice(0, 10)}…
+            </option>
+          ))}
+        </select>
+      )}
 
       <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/10">
         <input
@@ -84,6 +111,7 @@ export default function Chat() {
               setCurrentConversationId,
               currentChunk,
               modelId,
+              hfToken: activeToken,
             })
           }
           className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-500 px-1 text-white"
@@ -101,6 +129,7 @@ export default function Chat() {
               setCurrentConversationId,
               currentChunk,
               modelId,
+              hfToken: activeToken,
             })
           }
           className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-400 text-black hover:bg-blue-300 transition"

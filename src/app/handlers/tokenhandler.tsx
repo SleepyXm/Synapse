@@ -25,6 +25,8 @@ export const useHfTokens = () => {
       toast.error(err.message);
     }
   };
+  const listHfTokens = () => user?.hf_token ?? [];
 
-  return { user, addToken, deleteToken };
+  return { user, addToken, deleteToken, listHfTokens };
 };
+
