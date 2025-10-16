@@ -10,6 +10,7 @@ import {
   onConversationSelected,
   fetchConversations,
 } from "../hooks/conversation";
+import Tooling from "@/app/components/Tooling";
 
 export default function Chat() {
   const params = useParams();

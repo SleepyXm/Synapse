@@ -69,23 +69,36 @@ class LLM:
 
 
 async def try_generate_title(conversation_id: str, llm: LLM, messages: list[dict]):
-    if not messages:
+    """
+    Attempts to auto-generate a concise conversation title from the first user message.
+    Skips system or assistant messages and updates the DB only if title is missing.
+    """
+    # --- Find first valid user message ---
+    first_user_message = next(
+        (m["content"].strip() for m in messages if m.get("role") == "user" and m.get("content")),
+        None
+    )
+    if not first_user_message:
         return
 
-    first_user_message = messages[0]["content"]
+    # --- Check if conversation already has a title ---
     conversation_record = await database.fetch_one(
         "SELECT title FROM conversations WHERE id = :id",
         {"id": conversation_id}
     )
+    if not conversation_record or conversation_record["title"]:
+        return
 
-    if conversation_record and conversation_record["title"] is None:
-        title = await llm.generate_conversation_title(first_user_message)
-        await database.execute(
-            """
-            UPDATE conversations SET title = :title, updated_at = :updated_at WHERE id = :id
-            """,
-            {"title": title, "updated_at": datetime.utcnow(), "id": conversation_id}
-        )
+    # --- Generate and store title ---
+    title = await llm.generate_conversation_title(first_user_message)
+    await database.execute(
+        """
+        UPDATE conversations
+        SET title = :title, updated_at = :updated_at
+        WHERE id = :id
+        """,
+        {"title": title, "updated_at": datetime.utcnow(), "id": conversation_id}
+    )
 
 async def build_llm_memory(manager: ConversationManager, recent_n: int = 20):
     """
@@ -150,21 +163,3 @@ async def chat_stream(req: ChatRequest, conversation_id: str):
             yield delta
 
     return StreamingResponse(event_generator(), media_type="text/plain")
-
-vector_store = {}
-
-@router.post("/consume")
-async def consume_files(files: List[UploadFile] = File(...)):
-    received_files = []
-
-    for file in files:
-        # You can keep PDF/text detection if needed
-        if file.filename.endswith((".pdf", ".md")):
-            # Optional: just read raw bytes or text for logging
-            _ = await file.read()  
-        else:
-            _ = await file.read()
-        
-        received_files.append(file.filename)
-        # Optionally store raw bytes just for verification
-        vector_store[file.filename] = b"<file received>"

@@ -2,7 +2,6 @@
 
 import Chat from "@/app/components/Chat";
 import Conversation from "@/app/components/Conversations";
-import Tooling from "@/app/components/Tooling";
 import AuraBackground7 from "@/app/assets/background7";
 
 export default function ChatPage() {
@@ -20,8 +19,7 @@ export default function ChatPage() {
         ].join(" ")}
       >
         <AuraBackground7 />
-        <Chat />
-        <Tooling />
+        <Chat /> 
         <Conversation />
       </div>
     )

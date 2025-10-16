@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
+import { useHfTokens } from "@/app/handlers/tokenhandler";
 
-export default function DatasetDropper() {
+export default function DatasetDropper({ hfToken }: { hfToken: string }) {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -19,27 +20,34 @@ export default function DatasetDropper() {
   };
 
   const handleConsume = async () => {
-    if (files.length === 0) return;
+  if (files.length === 0) return;
 
-    setLoading(true);
-    const formData = new FormData();
-    files.forEach((file) => formData.append("files", file));
+  setLoading(true);
+  const formData = new FormData();
 
-    try {
-      const res = await fetch("http://localhost:8000/llm/consume", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      console.log("Consume response:", data);
-      alert(`Successfully ingested: ${data.files_ingested.join(", ")}`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to consume files");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Append files
+  files.forEach((file) => formData.append("files", file));
+
+  // Append HF token from activeToken
+  formData.append("hfToken", hfToken);
+
+  try {
+    const res = await fetch("http://localhost:8000/llm/consume", {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
+
+    const data = await res.json();
+    console.log("Consume response:", data);
+    alert(`Successfully ingested: ${data.files_ingested.join(", ")}`);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to consume files");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div

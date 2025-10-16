@@ -65,9 +65,6 @@ class LLMTooling:
     
 
 
-
-vector_store = {}
-
 #embeddings_model = OpenAIEmbeddings()
 
 #def read_pdf(file):

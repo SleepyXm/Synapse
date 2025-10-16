@@ -45,10 +45,15 @@ class StoredMessage(BaseModel):
     class Config:
         orm_mode = True
 
-class ChatRequest(BaseModel):
-    modelId: str
+class Request(BaseModel):
+    modelId: Optional[str] = None
     hfToken: str
+
+class ChatRequest(Request):
     conversation: List[Message]
+
+class EmbedRequest(Request):
+    files: List[str]
 
 class CreateConversationRequest(BaseModel):
     title: str
