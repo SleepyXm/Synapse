@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import urllib.parse
 
 def should_search(user_input: str) -> bool:
-    triggers = ["search", "look up", "find info", "google", "can you check", "what does the internet say"]
+    triggers = ["search", "look up", "find info", "google", "can you check online", "what does the internet say"]
     text = user_input.lower()
     return any(trigger in text for trigger in triggers)
 

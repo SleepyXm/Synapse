@@ -26,15 +26,15 @@ export default function ModelExplorer() {
     if (num < 1e9) return 1; // <1B
     if (num < 6e9) return 3; // <6B
     if (num < 10e9) return 5; // <10B
-    if (num < 27.5e9) return 7; // <27B
+    if (num < 37.5e9) return 7; // <27B
     return 10; // 10B+
   }
 
   // Utility to get difficulty color
   function ratingColor(rating: number): string {
-    if (rating <= 5) return "green";
-    if (rating <= 7) return "orange";
-    return "red";
+    if (rating <= 5) return "#34ff7eff";
+    if (rating <= 7) return "#fdc662ff";
+    return "#f30051ff";
   }
 
   const fetchModels = async () => {
@@ -65,17 +65,30 @@ export default function ModelExplorer() {
   };
 
   return (
-    <motion.div className="p-4 bg-black/60 backdrop-blur rounded-2xl shadow-2xl overflow-hidden"
-    layout
-    transition={{ duration: 0.2, ease: "easeInOut" }}
-    style={{width: "fit-content", maxWidth:"100%"}}>
+    <motion.div
+      tabIndex={0}
+      className="p-4 bg-black/20 backdrop-blur rounded-2xl shadow-2xl overflow-hidden"
+      layout
+      transition={{ duration: 0.2, ease: "easeInOut" }}
+      style={{ width: "fit-content", maxWidth: "100%" }}
+    >
       <h2 className="text-xl font-bold mb-4 text-white text-center">
-        Hugging Face Models Explorer
+        Open-Source Model Finder
       </h2>
 
       {/* Search + Sort Controls */}
       <div className="mb-4 flex justify-center">
-        <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex gap-2 items-center">
+        <div
+          className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex gap-2 items-center focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
+          tabIndex={-1} // not strictly necessary, but good if you want focus styles
+          onClick={(e) => {
+            // focus the input when container is clicked
+            const input = e.currentTarget.querySelector(
+              "input"
+            ) as HTMLInputElement;
+            input?.focus();
+          }}
+        >
           <input
             type="text"
             placeholder="Search models..."
@@ -96,8 +109,10 @@ export default function ModelExplorer() {
           </select>
 
           <button
-            onClick={() => {fetchModels();}}
-            className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-400 text-black hover:bg-blue-300 transition"
+            onClick={() => {
+              fetchModels();
+            }}
+            className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-200 text-black hover:bg-teal-500 transition"
           >
             Search
             <svg
@@ -124,7 +139,7 @@ export default function ModelExplorer() {
         {models.map((model) => (
           <div
             key={model.id}
-            className="flex flex-col border border-white/10 rounded-2xl bg-black/60 p-3 shadow-2xl"
+            className="flex flex-col border border-white/10 rounded-2xl bg-black/60 p-3 shadow-2xl hover:border-teal-400 transition ease-in-out duration-350"
           >
             <img
               src={model.authorData.avatarUrl}
@@ -133,30 +148,30 @@ export default function ModelExplorer() {
             />
             <a
               href={`/model/${model.id}`}
-              className="font-bold text-white hover:text-orange-500 transition-colors mb-1"
+              className="font-bold text-white hover:text-teal-500 transition-colors mb-1"
             >
               {model.id}
             </a>
             <div className="text-sm text-gray-300 mb-1">
-              by {model.authorData.fullname}
+              by{" "}
+              <span style={{ color: "#21aaffff" }} className="font-semibold">
+                {model.authorData.fullname}
+              </span>
             </div>
             <div className="text-sm text-gray-300 mb-1">
-              ⬇️ {model.downloads.toLocaleString()} downloads
+              {model.downloads.toLocaleString()} downloads
             </div>
             <div className="text-sm text-gray-300">
-              Param count: {formatParams(model.numParameters)}{" "}
+              Param count:{" "}
               <span
                 className="font-bold"
                 style={{ color: ratingColor(paramRating(model.numParameters)) }}
               >
-                ({paramRating(model.numParameters)}/10)
+                {formatParams(model.numParameters)}
               </span>
             </div>
             <div className="text-sm text-gray-300 mb-1">
               Type: {model.pipeline_tag}
-            </div>
-            <div className="text-sm text-gray-300 mb-1">
-              Inference Provider: {model.availableInferenceProviders?.map(p => p.provider)[0]}
             </div>
           </div>
         ))}

@@ -1,5 +1,4 @@
 "use client";
-import AuraBackground7 from "@/app/assets/background7";
 import { logout } from "@/app/types/auth";
 import { useState, useEffect } from "react";
 import { useUser } from "../handlers/UserProvider";
@@ -20,8 +19,7 @@ export default function Profile() {
   const { username, password, hf_token, email } = user;
 
   return (
-    <div className="bg-gray-800/70 min-h-screen flex justify-center items-start pt-[10vh] relative">
-      <AuraBackground7 />
+    <div className="min-h-screen flex justify-center items-start pt-[10vh] relative">
       <div className="w-[80%] h-[85vh] rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-6 shadow-2xl flex gap-6">
         <div className="w-48 flex flex-col items-center border-r border-white/10 pr-4 gap-6">
           <div className="flex flex-col items-center">

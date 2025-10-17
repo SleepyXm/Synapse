@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
-import { useHfTokens } from "@/app/handlers/tokenhandler";
 
-export default function DatasetDropper({ hfToken }: { hfToken: string }) {
+export default function DatasetDropper() {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +28,7 @@ export default function DatasetDropper({ hfToken }: { hfToken: string }) {
   files.forEach((file) => formData.append("files", file));
 
   // Append HF token from activeToken
-  formData.append("hfToken", hfToken);
+  formData.append("hfToken", localStorage.getItem("hf_token") || "" );
 
   try {
     const res = await fetch("http://localhost:8000/llm/consume", {

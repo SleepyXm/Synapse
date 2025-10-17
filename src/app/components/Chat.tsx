@@ -10,7 +10,6 @@ import {
   onConversationSelected,
   fetchConversations,
 } from "../hooks/conversation";
-import Tooling from "@/app/components/Tooling";
 
 export default function Chat() {
   const params = useParams();
@@ -48,7 +47,7 @@ export default function Chat() {
   const allMessages = [...loadedMessages, ...currentMessages];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex flex-col w-full max-w-[30vw] h-[80vh] mt-16">
+    <div className="bg-black/60 backdrop-blur p-2 flex flex-col w-full max-w-[50vw] h-[92vh] mt-20">
       <h2 className="text-xl font-bold mt-4 text-white text-center flex items-center justify-center gap-2">
         {params.model}
         <button
@@ -65,7 +64,7 @@ export default function Chat() {
             key={m.id ?? i}
             className={`my-1 p-2 rounded inline-block max-w-[70%] break-words mt-8 rounded-xl ${
               (m.message?.role ?? m.role) === "user"
-                ? "bg-gray-800 text-white ml-auto text-right"
+                ? "bg-teal-300/40 text-white ml-auto text-right"
                 : "bg-white/0 text-white mr-auto text-left"
             }`}
           >
@@ -133,7 +132,7 @@ export default function Chat() {
               hfToken: activeToken,
             })
           }
-          className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-400 text-black hover:bg-blue-300 transition"
+          className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-200 text-black hover:bg-teal-500 transition"
         >
           Send
           <svg

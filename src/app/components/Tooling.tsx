@@ -1,8 +1,8 @@
 import DatasetDropper from "./FileDropper";
 
-export default function Tooling({ hfToken }: { hfToken: string }) {
+export default function Tooling() {
     return (
-        <div className="absolute left-[calc(50%+15vw)] rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-4 shadow-2xl flex flex-col w-[25vw] h-[80vh] mt-16">
+        <div className="absolute left-[calc(50%+25vw)] bg-black/60 backdrop-blur p-4 flex flex-col w-[25vw] h-[92vh] mt-20">
           <h3 className="text-lg font-bold text-white text-center mb-4">Tools</h3>
           <div className="flex flex-col gap-3 flex-1">
 
@@ -11,7 +11,7 @@ export default function Tooling({ hfToken }: { hfToken: string }) {
                 Datasets / Docs
               </div>
               <div className="flex-1 flex items-center justify-center text-gray-400 text-xs">
-                <DatasetDropper hfToken={hfToken} />
+                <DatasetDropper />
               </div>
             </div>
 

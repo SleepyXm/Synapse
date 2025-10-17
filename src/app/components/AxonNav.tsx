@@ -1,11 +1,12 @@
 import { useState, useContext } from "react";
 import { UserContext } from "../handlers/UserProvider";
-import { FaCalendarAlt } from "react-icons/fa"; // only if needed for dropdown icons
 import { logout } from "../types/auth";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const { user } = useContext(UserContext)!;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
 
   const links = [
     { label: "Home", url: "/" },
@@ -18,11 +19,11 @@ const Navbar = () => {
           url: "/Profile"
         },
           {
-            label: "Log-out", onClick: async () => { await logout();},
+            label: "Sign out", onClick: async () => { await logout();},
           },
         ]
       : [
-          { label: "Log-in", url: "/login", },
+          { label: "Sign in", url: "/login", },
         ]),
   ];
   // Desktop links
@@ -47,9 +48,31 @@ const Navbar = () => {
               strokeLinejoin="round"
             />
           </svg>
-          <span className="text-lg font-medium text-white tracking-tight">
-            Axon
-          </span>
+          <div className="text-sm font-semibold text-white w-full flex items-center justify-center whitespace-nowrap">
+            {" "}
+            <svg
+              width="auto"
+              height="20"
+              viewBox="0 0 400 80"
+              className="inline align-middle"
+            >
+              <defs>
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#74d4cfff" />
+                  <stop offset="100%" stopColor="#7edd7eff" />
+                </linearGradient>
+              </defs>
+              <text
+                x="0"
+                y="60"
+                fontSize="84"
+                fontWeight="200"
+                fill="url(#grad1)"
+              >
+                Synapse
+              </text>
+            </svg>
+          </div>
         </a>
 
         {/* Desktop Links */}
@@ -60,14 +83,14 @@ const Navbar = () => {
                 {link.url ? (
                   <a
                     href={link.url}
-                    className="hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5 font-manrope"
+                    className="hover:text-black transition-colors duration-300 px-4 py-2 rounded-full hover:bg-teal-300"
                   >
                     {link.label}
                   </a>
                 ) : (
                   <button
                     onClick={link.onClick}
-                    className="hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5 font-manrope"
+                    className="hover:text-black transition-colors duration-300 px-4 py-2 rounded-full hover:bg-teal-300"
                   >
                     {link.label}
                   </button>
@@ -105,20 +128,12 @@ const Navbar = () => {
               <li key={link.label}>
                 <a
                   href={link.url}
-                  className="w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5 font-manrope"
+                  className="w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5 "
                 >
                   {link.label}
                 </a>
               </li>
             ))}
-            <li>
-              <a
-                href="/request-access"
-                className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 hover:bg-white/15"
-              >
-                Request Access
-              </a>
-            </li>
           </ul>
         )}
       </div>

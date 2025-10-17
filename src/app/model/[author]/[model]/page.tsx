@@ -2,7 +2,7 @@
 
 import Chat from "@/app/components/Chat";
 import Conversation from "@/app/components/Conversations";
-import AuraBackground7 from "@/app/assets/background7";
+import Tooling from "@/app/components/Tooling";
 
 export default function ChatPage() {
   
@@ -14,13 +14,12 @@ export default function ChatPage() {
           "items-center",
           "justify-center",
           "h-screen",
-          "bg-gray-900/70",
           "p-4",
         ].join(" ")}
       >
-        <AuraBackground7 />
         <Chat /> 
         <Conversation />
+        <Tooling />
       </div>
     )
   }
