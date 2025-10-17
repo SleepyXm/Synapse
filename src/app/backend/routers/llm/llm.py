@@ -18,54 +18,54 @@ class LLM:
             api_key=hf_token,
         )
         self.tooling = tooling
-        
+
+    
     async def generate_conversation_title(self, conversation_snippet: str) -> str:
+
         messages = [
-            {
-                "role": "system",
-                "content": "You are an assistant that creates short, descriptive titles for conversations."
-            },
-            {
-                "role": "user",
-                "content": f"Generate a concise title for this conversation: {conversation_snippet}"
-            }
+            {"role": "system", "content": "You are an assistant that creates short, descriptive titles for conversations."},
+            {"role": "user", "content": f"Generate a concise title for the following: {conversation_snippet}"}
         ]
-            
+
         response = self.client.chat.completions.create(
             model=self.model_id,
             messages=messages,
             max_tokens=12,
         )
-            
-        return response.choices[0].message.content.strip()
+
+
+        if hasattr(response, "choices") and response.choices:
+            content = getattr(response.choices[0].message, "content", None)
+            if content:
+                return content.strip()
+
+        return "Untitled Conversation"  # fail-fast
+    
     
     async def stream_response(self, messages: list[dict]):
         last_user_input = messages[-1]["content"] if messages else ""
         if self.tooling:
             context = await self.tooling.handle_input(last_user_input)
             if context:
-                messages.append({
-                    "role": "system",
-                    "content": context,
-                })
-
+                messages.append({"role": "system", "content": context})
 
         stream = self.client.chat.completions.create(
             model=self.model_id,
             messages=messages,
             stream=True,
-            )
+        )
+
         assistant_message = {"role": "assistant", "content": ""}
-            
+
         for chunk in stream:
-            if not getattr(chunk, "choices", None):
+            if not chunk.choices or len(chunk.choices) == 0:
                 continue
-            if len(chunk.choices) == 0:
-                continue
-            delta = getattr(chunk.choices[0].delta, "content", None)
-            if delta:
-                assistant_message["content"] += delta
-                yield delta
+            delta = chunk.choices[0].delta
+            # Handle dict-based HF response safely
+            delta_content = delta.get("content") if isinstance(delta, dict) else getattr(delta, "content", None)
+            if delta_content:
+                assistant_message["content"] += delta_content
+                yield delta_content
 
 
 async def try_generate_title(conversation_id: str, llm: LLM, messages: list[dict]):
