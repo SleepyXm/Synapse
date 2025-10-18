@@ -5,15 +5,18 @@ from routers.llm import llm
 from routers.user import profile, tokens, user
 from database import database
 from routers.conversations import conversations
+import os
+from dotenv import load_dotenv
+load_dotenv
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[os.getenv("DEV_SERVER"), os.getenv("FRONT-END-PROD")],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "PUT"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])

@@ -4,10 +4,7 @@ from routers.auth.auth_utils import get_current_user
 from schemas import FavLLM
 from uuid import uuid4
 
-
 router = APIRouter()
-
-
 
 @router.post("/add_fav")
 async def add_fav(req: FavLLM, current_user: dict = Depends(get_current_user)):

@@ -14,7 +14,7 @@ export default function ClientWrapper({ children }: ClientWrapperProps) {
       <Navbar />
       {children}
     </>
-  );
+  )
 }
 
 */}

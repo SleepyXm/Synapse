@@ -29,9 +29,11 @@ export default function Chat() {
 
   useEffect(() => {
     const tokens = listHfTokens();
-    setHfTokens(tokens);
-    setActiveToken(tokens[0] ?? "");
-  },[]);
+    if (tokens) { 
+        setHfTokens(tokens);
+        setActiveToken(tokens[0] ?? "");
+    }
+  });
 
 
   useEffect(() => {

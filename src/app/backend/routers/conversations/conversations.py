@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Body, Depends
 from routers.auth.auth_utils import get_current_user
 from schemas import CreateConversationRequest
-import uuid
 from typing import List, Dict, Any
-from datetime import datetime
 from helpers import ConversationManager
 
 router = APIRouter()

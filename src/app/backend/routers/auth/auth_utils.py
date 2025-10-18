@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi import Request, HTTPException, status
-from database import database  # your async DB instance
+from database import database
 import os
+from dotenv import load_dotenv
 
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 240))
 
 
 def create_access_token(username: str):
