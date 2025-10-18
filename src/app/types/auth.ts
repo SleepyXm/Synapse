@@ -57,6 +57,7 @@ export async function login(username: string, password: string) {
 export async function logout() {
   await request("/auth/logout", { method: "POST" });
 
+
 }
 
 export function getProtected(path: string) {

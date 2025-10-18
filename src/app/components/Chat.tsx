@@ -2,9 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import rehypeHighlight from "rehype-highlight";
 import ReactMarkdown from "react-markdown";
-import { handleFavClick } from "@/app/hooks/interactive";
+import { handleFavClick, sendMessage } from "@/app/hooks/interactive";
 import { Message } from "../types/chat";
-import { sendMessage } from "@/app/hooks/interactive";
 import { useHfTokens } from "@/app/handlers/tokenhandler";
 import {
   onConversationSelected,
