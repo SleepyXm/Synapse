@@ -24,7 +24,7 @@ class LLM:
 
         messages = [
             {"role": "system", "content": "You are an assistant that creates short, descriptive titles for conversations."},
-            {"role": "user", "content": f"Generate a concise title for the following: {conversation_snippet}"}
+            {"role": "user", "content": f"Generate a short concise title for the following: {conversation_snippet}"}
         ]
 
         response = self.client.chat.completions.create(
@@ -37,7 +37,10 @@ class LLM:
         if hasattr(response, "choices") and response.choices:
             content = getattr(response.choices[0].message, "content", None)
             if content:
-                return content.strip()
+                content = content.strip()
+                if content.startswith('"') and content.endswith('"'):
+                    content = content[1:-1].strip()
+                return content
 
         return "Untitled Conversation"  # fail-fast
     
