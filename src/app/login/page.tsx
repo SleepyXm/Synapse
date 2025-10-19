@@ -36,7 +36,7 @@ export default function Auth() {
 }
   return (
     <div className="grid grid-rows-[5vh_1fr_5vh] items-center justify-items-center min-h-screen gap-[5vh]">
-  <div className="flex flex-col row-start-2 items-center w-[85vw] sm: mt-120 lg:w-[20vw] mt-[-120]">
+  <div className="flex flex-col row-start-2 items-center w-[85vw] sm:mt-120 lg:w-[20vw] mt-[-120]">
     <div className="relative w-full max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-1000 mx-auto">
       <section className="order-1 lg:order-2 relative">
   <div className="group relative w-full h-full">
