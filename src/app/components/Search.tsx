@@ -79,7 +79,7 @@ export default function ModelExplorer() {
       {/* Search + Sort Controls */}
       <div className="mb-4 flex justify-center">
         <div
-          className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex gap-2 items-center focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
+          className="w-[52vw] rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex gap-2 items-center focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
           tabIndex={-1} // not strictly necessary, but good if you want focus styles
           onClick={(e) => {
             // focus the input when container is clicked
