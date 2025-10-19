@@ -2,6 +2,8 @@ import { addFavLLM } from "../types/fav";
 import { Message, createConversation } from "../types/chat";
 import { fetchConversations } from "./conversation";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+
 export const handleFavClick = async (
   modelId: string | undefined,
   setIsFav: React.Dispatch<React.SetStateAction<boolean>>
@@ -61,7 +63,7 @@ async function streamAssistantResponse(
   currentChunk: React.MutableRefObject<Message[]>
 ) {
   try {
-    const response = await fetch(`http://localhost:8000/llm/chat/stream?conversation_id=${conversationId}`, {
+    const response = await fetch(`${API_BASE}/llm/chat/stream?conversation_id=${conversationId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ modelId, hfToken, conversation }),
@@ -106,7 +108,7 @@ async function flushChunk(conversationId: string, currentChunk: React.MutableRef
   if (!conversationId || currentChunk.current.length === 0) return;
   
   try {
-    await fetch(`http://localhost:8000/conversation/${conversationId}/chunk`, {
+    await fetch(`${API_BASE}/conversation/${conversationId}/chunk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
