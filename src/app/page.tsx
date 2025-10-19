@@ -1,16 +1,7 @@
 "use client";
 
 import ModelExplorer from "./components/Search";
-import { motion, easeOut } from "framer-motion";
-
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 1) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.15, duration: 0.5, ease: easeOut },
-  }),
-};
+import { motion } from "framer-motion";
 
 export default function Home() {
   return (
