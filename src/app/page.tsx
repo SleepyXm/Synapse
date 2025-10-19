@@ -41,7 +41,7 @@ export default function Home() {
           </h1>
         </motion.div>
 
-        <div className="mt-[-16]">
+        <div className="mt-[-16] mr-16">
           Control your Intelligence.
         </div>
 
