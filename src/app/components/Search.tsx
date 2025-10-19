@@ -67,7 +67,7 @@ export default function ModelExplorer() {
   return (
     <motion.div
       tabIndex={0}
-      className="p-4 bg-black/20 backdrop-blur rounded-2xl shadow-2xl overflow-hidden sm:mr-12"
+      className="p-4 bg-black/20 backdrop-blur rounded-2xl shadow-2xl overflow-hidden mr-0 sm:mr-12"
       layout
       transition={{ duration: 0.2, ease: "easeInOut" }}
       style={{ width: "fit-content", maxWidth: "100%" }}
