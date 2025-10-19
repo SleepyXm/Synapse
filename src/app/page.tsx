@@ -14,7 +14,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-7xl font-semibold text-white w-full flex items-center justify-center whitespace-nowrap ml-18">
+          <h1 className="text-7xl font-semibold text-white w-full flex items-center justify-center whitespace-nowrap ml-0 md:ml-18">
             {" "}
             <svg
               width="auto"
