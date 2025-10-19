@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 export async function request(path: string, options: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -31,7 +31,9 @@ export async function checkAuth(): Promise<any | null> {
     }
 
     return data;
-  } catch {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error("Unknown error");
+    console.error("checkAuth failed:", error.message);
     return null;
   }
 }
@@ -56,8 +58,6 @@ export async function login(username: string, password: string) {
 
 export async function logout() {
   await request("/auth/logout", { method: "POST" });
-
-
 }
 
 export function getProtected(path: string) {
