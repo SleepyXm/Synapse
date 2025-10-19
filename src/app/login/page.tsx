@@ -2,19 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { easeOut } from "framer-motion";
 import { signup, login } from "@/app/types/auth";
 import { useUser } from "../handlers/UserProvider";
 
-
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 1) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.15, duration: 0.5, ease: easeOut },
-  }),
-};
 
 export default function Auth() {
   const { setUser } = useUser();
