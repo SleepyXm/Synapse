@@ -16,7 +16,7 @@ export default function Profile() {
 
   if (!user) return <div>Loading...</div>;
 
-  const { username, hf_token, email } = user;
+  const { username, hf_token } = user;
 
   return (
     <div className="min-h-screen flex justify-center items-start pt-[10vh] relative">
@@ -129,7 +129,7 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                <span>{user.email || <em>Add your email</em>}</span>
+                
               </div>
 
               <div className="flex flex-col bg-white/5 p-3 rounded-md gap-2 mt-4">
@@ -200,7 +200,7 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                <span>{email || <em>Add your email</em>}</span>
+                
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
@@ -226,7 +226,7 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                <span>{email || <em>Add your email</em>}</span>
+                 
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
@@ -252,7 +252,7 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                <span>{email || <em>Add your email</em>}</span>
+                 
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
@@ -277,7 +277,7 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                <span>{email || <em>Add your email</em>}</span>
+                 
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
@@ -304,7 +304,7 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                <span>{email || <em>Add your email</em>}</span>
+                 
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
