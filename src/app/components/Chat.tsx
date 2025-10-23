@@ -116,7 +116,7 @@ export default function Chat() {
               setCurrentConversationId,
               currentChunk,
               modelId,
-              hfToken: activeToken,
+              hfToken: activeToken ?? "",
             })
           }
           className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-500 px-1 text-white"
@@ -134,7 +134,7 @@ export default function Chat() {
               setCurrentConversationId,
               currentChunk,
               modelId,
-              hfToken: activeToken,
+              hfToken: activeToken ?? "",
             })
           }
           className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-200 text-black hover:bg-teal-500 transition"
