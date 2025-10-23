@@ -27,14 +27,13 @@ export default function Chat() {
     string | null
   >(null);
 
-  useEffect(() => {
-  const tokens = listHfTokens();
-  if (tokens && tokens.length > 0) {
-    setHfTokens(tokens);
-
-    setActiveToken(prev => prev || tokens[0]);
-  }
-  }, []);
+  useEffect(() => { 
+    const tokens = listHfTokens();
+    if (tokens) {
+      setHfTokens(tokens);
+      setActiveToken(tokens[0] ?? "");
+    }
+  });
 
 
   useEffect(() => {
