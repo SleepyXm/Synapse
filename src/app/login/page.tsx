@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signup, login } from "@/app/types/auth";
 import { useUser } from "../handlers/UserProvider";
@@ -9,10 +9,17 @@ import { useUser } from "../handlers/UserProvider";
 export default function Auth() {
   const { setUser } = useUser();
   const [userName, setUserName] = useState("");
+  const [mounted, setMounted] = useState(false);
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true); 
+  }, []);
+
+  if (!mounted) return null;
 
   async function handleSubmit() {
   try {

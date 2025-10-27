@@ -1,6 +1,7 @@
 import { useUser } from "@/app/handlers/UserProvider";
 import { addHfToken as apiAdd, deleteHfToken as apiDelete } from "@/app/types/tokens";
 import toast from "react-hot-toast";
+import { User } from "@/app/types/auth";
 
 export const useHfTokens = () => {
   const { user, setUser } = useUser();
@@ -21,11 +22,11 @@ export const useHfTokens = () => {
   const deleteToken = async (token: string) => {
     try {
       const updatedTokens = await apiDelete(token);
-      setUser(prev => prev ? { ...prev, hf_token: [...updatedTokens] } : null);
-      toast.success("HF Token deleted!");
-    } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error("Failed to delete HF token");
-      toast.error(error.message);
+    setUser((prev: User | null) => prev ? { ...prev, hf_token: [...updatedTokens] } : null);
+    toast.success("HF Token deleted!");
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error("Failed to delete HF token");
+    toast.error(error.message);
     }
   };
 

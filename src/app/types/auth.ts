@@ -19,6 +19,43 @@ export async function request(path: string, options: RequestInit) {
   return data;
 }
 
+export type User = {
+    username: string;
+    hf_token: string[];
+};
+
+let currentUser: User | null = null;
+let validatePromise: Promise<User | null> | null = null;
+
+function generateKey() {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+export function getUser(): User | null {
+  if (typeof window === "undefined") return null;
+  const key = sessionStorage.getItem("reactiveLoginKey");
+  if (!key) return null;
+  return currentUser;
+}
+
+export async function validateUser(): Promise<User | null> {
+  if (currentUser) return Promise.resolve(currentUser);
+  if (!validatePromise) {
+    validatePromise = checkAuth().then(user => {
+      currentUser = user;
+      if (user) {
+        sessionStorage.setItem("reactiveLoginKey", generateKey());
+      } else {
+        sessionStorage.removeItem("reactiveLoginKey");
+      }
+      return user;
+    }).finally(() => {
+      validatePromise = null;
+    });
+  }
+  return validatePromise;
+}
+
 export async function checkAuth(): Promise<{ username: string; hf_token: string[] } | null> {
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
@@ -28,6 +65,7 @@ export async function checkAuth(): Promise<{ username: string; hf_token: string[
     });
 
     if (res.status === 401) {
+      // 401 = not logged in, valid case
       return null;
     }
 
@@ -62,13 +100,21 @@ export async function login(username: string, password: string) {
     body: JSON.stringify({ username, password }),
   });
 
-  const userObj = await request("/auth/me", { method: "GET", credentials: "include" });
-  
+  const userObj = await validateUser();
+
   return { ...res, user: userObj };
 }
 
 export async function logout() {
   await request("/auth/logout", { method: "POST" });
+  currentUser = null;
+  sessionStorage.removeItem("reactiveLoginKey");
+
+  if (validatePromise) {
+    await validatePromise;
+    currentUser = null;
+    sessionStorage.removeItem("reactiveLoginKey");
+  }
 }
 
 export function getProtected(path: string) {

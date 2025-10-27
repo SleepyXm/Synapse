@@ -9,11 +9,17 @@ export default function Profile() {
   const { user } = useUser();
   const [hfTokens, setHfTokens] = useState<string[]>([]);
   const [newToken, setNewToken] = useState("");
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (user?.hf_token) setHfTokens(user.hf_token);
   }, [user?.hf_token]);
 
+  if (!hydrated) return null;
   if (!user) return <div>Loading...</div>;
 
   const { username, hf_token } = user;

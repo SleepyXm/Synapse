@@ -1,11 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { checkAuth } from "../types/auth";
-
-export type User = {
-    username: string;
-    hf_token: string[];
-};
+import { getUser, validateUser, User } from "../types/auth";
 
 export interface UserContextType {
   user: User | null;
@@ -15,10 +10,25 @@ export interface UserContextType {
 export const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem("reactiveLoginKey") ? {} as User : null;
+});
 
   useEffect(() => {
-    checkAuth().then(setUser); // only called once
+    if (user) {
+      validateUser().then(updated => {
+        setUser(updated);
+      });
+    }
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "reactiveLoginKey") {
+        setUser(getUser());
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   return (
