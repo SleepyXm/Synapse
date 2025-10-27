@@ -30,7 +30,7 @@ export default function Profile() {
         <div className="w-48 flex flex-col items-center border-r border-white/10 pr-4 gap-6">
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-xl font-medium text-white">
-              {username[0].toUpperCase()}
+              {username ? username[0].toUpperCase() : "?"}
             </div>
             <div className="text-white text-sm mt-1">{username}</div>
           </div>
