@@ -1,35 +1,21 @@
 "use client";
 
 import ModelExplorer from "./components/Search";
-import { motion, easeOut } from "framer-motion";
-
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 1) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.15, duration: 0.5, ease: easeOut },
-  }),
-};
+import { motion } from "framer-motion";
 
 export default function Home() {
   return (
-    <div
-      className="grid grid-rows-[5vh_1fr_5vh] items-center justify-items-center min-h-screen pb-[10vh] gap-[5vh]"
-    >
-      <div className="flex flex-col gap-[4vh] row-start-2 items-center w-full">
+    <div className="grid min-h-screen grid-rows-[10fr_auto_1fr] place-items-center py-48">
+      <div className="flex flex-col items-center gap-6 w-full px-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-7xl font-semibold text-white w-full flex items-center justify-center whitespace-nowrap ml-14">
-            {" "}
+          <h1 className="flex items-center justify-center">
             <svg
-              width="auto"
-              height="90"
               viewBox="0 0 400 80"
-              className="inline align-middle"
+              className="h-24 sm:h-16 md:h-28"
             >
               <defs>
                 <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -38,8 +24,10 @@ export default function Home() {
                 </linearGradient>
               </defs>
               <text
-                x="0"
-                y="60"
+                x="50%"
+                y="50%"
+                textAnchor="middle"
+                dominantBaseline="middle"
                 fontSize="68"
                 fontWeight="200"
                 fill="url(#grad1)"
@@ -50,9 +38,9 @@ export default function Home() {
           </h1>
         </motion.div>
 
-        <div className="mt-[-16]">
+        <p className="text-center text-white/80 text-base sm:text-lg">
           Control your Intelligence.
-        </div>
+        </p>
 
         <ModelExplorer />
       </div>
