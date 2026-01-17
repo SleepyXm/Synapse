@@ -13,7 +13,7 @@ export default function Home() {
           transition={{ duration: 0.6 }}
         >
           <h1 className="flex items-center justify-center">
-            <svg viewBox="0 0 400 80" className="w-full h-20 sm:h-16 md:h-28">
+            <svg viewBox="0 0 475 80" className="w-full h-20 sm:h-16 md:h-28">
               <defs>
                 <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#74d4cfff" />
@@ -21,7 +21,7 @@ export default function Home() {
                 </linearGradient>
               </defs>
               <text
-                x="30%"
+                x="34%"
                 y="50%"
                 textAnchor="middle"
                 dominantBaseline="middle"
@@ -49,7 +49,7 @@ export default function Home() {
           </h1>
         </motion.div>
 
-        <p className="text-center text-white/80 text-base pr-[15%] justify-center sm:text-lg md:text-xl md:pl-[20%]">
+        <p className="text-center text-white/80 text-base pr-[28.5%] justify-center sm:text-lg md:text-xl md:pl-[28.5%]">
           Control your Intelligence.
         </p>
 
