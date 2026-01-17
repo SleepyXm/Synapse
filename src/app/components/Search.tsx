@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Model } from "../types/models";
-import Image from "next/image"
+import Image from "next/image";
 
 export default function ModelExplorer() {
   const [models, setModels] = useState<Model[]>([]);
@@ -48,8 +48,8 @@ export default function ModelExplorer() {
 
       const res = await fetch(
         `/api/models?search=${encodeURIComponent(
-          searchTerm
-        )}&sort=${sortBy}&withCount=true`
+          searchTerm,
+        )}&sort=${sortBy}&withCount=true`,
       );
 
       if (!res.ok) throw new Error("Failed to fetch models");
@@ -67,24 +67,22 @@ export default function ModelExplorer() {
   return (
     <motion.div
       tabIndex={0}
-      className="p-4 bg-black/20 backdrop-blur rounded-2xl shadow-2xl overflow-hidden"
+      className="p-4 bg-black/20 backdrop-blur rounded-2xl shadow-2xl overflow-hidden w-full max-w-full sm:max-w-xl"
       layout
       transition={{ duration: 0.2, ease: "easeInOut" }}
-      style={{ width: "fit-content", maxWidth: "100%" }}
     >
       <h2 className="text-xl font-bold mb-4 text-white text-center">
         Open-Source Model Finder
       </h2>
 
       {/* Search + Sort Controls */}
-      <div className="mb-4 flex justify-center">
+      <div className="mb-4 flex justify-center w-full px-2">
         <div
-          className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex gap-2 items-center focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
-          tabIndex={-1} // not strictly necessary, but good if you want focus styles
+          className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex flex-col sm:flex-row gap-2 items-center w-full max-w-2xl focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
+          tabIndex={-1}
           onClick={(e) => {
-            // focus the input when container is clicked
             const input = e.currentTarget.querySelector(
-              "input"
+              "input",
             ) as HTMLInputElement;
             input?.focus();
           }}
@@ -94,13 +92,13 @@ export default function ModelExplorer() {
             placeholder="Search models..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400 text-white px-2 py-1 rounded-md"
+            className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400 text-white px-2 py-1 rounded-md w-full sm:w-auto"
           />
 
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="bg-black/40 border border-white/15 text-white text-sm rounded-md px-2 py-1 hover:border-white/25 transition"
+            className="bg-black/40 border border-white/15 text-white text-sm rounded-md px-2 py-1 hover:border-white/25 transition w-full sm:w-auto"
           >
             <option value="trending">Trending</option>
             <option value="downloads">Downloads</option>
@@ -109,10 +107,8 @@ export default function ModelExplorer() {
           </select>
 
           <button
-            onClick={() => {
-              fetchModels();
-            }}
-            className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-200 text-black hover:bg-teal-500 transition"
+            onClick={fetchModels}
+            className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-200 text-black hover:bg-teal-500 transition w-full sm:w-auto justify-center"
           >
             Search
             <svg

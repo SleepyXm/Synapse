@@ -20,18 +20,6 @@ export default function Home() {
                   <stop offset="100%" stopColor="#7edd7eff" />
                 </linearGradient>
               </defs>
-              <text
-                x="35%"
-                y="50%"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="68"
-                fontWeight="200"
-                fill="url(#grad1)"
-                className="sm:hidden"
-              >
-                Synapse
-              </text>
 
               <text
                 x="50%"
@@ -41,7 +29,6 @@ export default function Home() {
                 fontSize="68"
                 fontWeight="200"
                 fill="url(#grad1)"
-                className="hidden sm:block"
               >
                 Synapse
               </text>
@@ -49,7 +36,7 @@ export default function Home() {
           </h1>
         </motion.div>
 
-        <p className="text-center text-white/80 text-base pr-[25%] justify-center sm:text-lg md:text-xl md:pl-[25%]">
+        <p className="text-center text-white/80 text-base justify-center sm:text-lg md:text-xl">
           Control your Intelligence.
         </p>
 
