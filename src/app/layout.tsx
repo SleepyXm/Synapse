@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "./components/AxonNav";
+import Navbar from "./components/SynapseNav";
 import { UserProvider } from "./handlers/UserProvider";
 import AuraBackground2 from "./assets/background2";
 import { jetBrainsMono } from "./assets/fonts";
