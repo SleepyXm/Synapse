@@ -16,7 +16,7 @@ export default function Conversation() {
 
   return (
     <div
-  className={`hidden md:flex flex-col bg-black/60 backdrop-blur p-2 shadow-2xl
+  className={`flex flex-col bg-black/60 backdrop-blur p-2 shadow-2xl
     transition-all duration-300 h-[94vh] mt-20
     ${showList ? "w-[25vw]" : "w-0 overflow-hidden"}`}
 >

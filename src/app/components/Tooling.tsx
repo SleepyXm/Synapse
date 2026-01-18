@@ -6,7 +6,7 @@ export default function Tooling() {
   const [showTooling, setShowTooling] = useState(true);
 
     return (
-        <div className={`hidden md:flex flex-col bg-black/60 backdrop-blur p-2 shadow-2xl
+        <div className={`md:flex flex-col bg-black/60 backdrop-blur p-2 shadow-2xl
     transition-all duration-300 h-[94vh] mt-20
     ${showTooling ? "w-[25vw]" : "w-0 overflow-hidden"}`}>
             <button
