@@ -2,7 +2,7 @@ import DatasetDropper from "./FileDropper";
 
 export default function Tooling() {
     return (
-        <div className="absolute left-[calc(50%+25vw)] bg-black/60 backdrop-blur p-4 flex flex-col w-[25vw] h-[92vh] mt-20">
+        <div className="hidden md:flex absolute md:left-[calc(50%+25vw)] bg-black/60 backdrop-blur p-2 shadow-2xl flex-col w-[25vw] h-[92vh] mt-20">
           <h3 className="text-lg font-bold text-white text-center mb-4">Tools</h3>
           <div className="flex flex-col gap-3 flex-1">
 

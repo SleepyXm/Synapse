@@ -13,7 +13,7 @@ export default function Conversation() {
       : "bg-black/30 hover:text-black hover:bg-teal-300";
 
   return (
-    <div className="absolute right-[calc(50%+25vw)] bg-black/60 backdrop-blur p-2 shadow-2xl flex flex-col w-[25vw] h-[92vh] mt-20">
+    <div className="hidden md:flex absolute md:right-[calc(50%+25vw)] bg-black/60 backdrop-blur p-2 shadow-2xl flex-col w-[25vw] h-[92vh] mt-20">
       <h3 className="text-sm font-bold text-white text-center mt-3 mb-3">
       Conversations
     </h3>

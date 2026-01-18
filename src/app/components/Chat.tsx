@@ -52,7 +52,7 @@ export default function Chat() {
   const allMessages = [...loadedMessages, ...currentMessages];
 
   return (
-    <div className="bg-black/60 backdrop-blur p-2 flex flex-col w-full max-w-[50vw] h-[92vh] mt-20">
+    <div className="bg-black/60 backdrop-blur p-2 flex flex-col w-full md:max-w-[50vw] h-[92vh] mt-20">
       <h2 className="text-xl font-bold mt-4 text-white text-center flex items-center justify-center gap-2">
         {params.model}
         <button
