@@ -98,6 +98,7 @@ export async function login(username: string, password: string) {
   const res = await request("/auth/login", {
     method: "POST",
     body: JSON.stringify({ username, password }),
+    credentials: include,
   });
 
   const userObj = await validateUser();
