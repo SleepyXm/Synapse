@@ -67,9 +67,10 @@ export default function ModelExplorer() {
   return (
     <motion.div
       tabIndex={0}
-      className="p-4 bg-black/20 backdrop-blur rounded-2xl shadow-2xl overflow-hidden w-full max-w-full sm:max-w-xl"
+      className="p-4 bg-black/20 backdrop-blur rounded-2xl shadow-2xl overflow-hidden w-xl"
       layout
-      transition={{ duration: 0.2, ease: "easeInOut" }}
+      transition={{ duration: 0.2, ease: "easeInOut"}}
+      style={{ width: "fit-content", maxWidth: "100%" }}
     >
       <h2 className="text-xl font-bold mb-4 text-white text-center">
         Open-Source Model Finder
