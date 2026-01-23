@@ -13,6 +13,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function Auth() {
       router.push("/");
     }
   } catch (err) {
-    console.error(err);
+    setError("Username or Password was inccorect. Try again");
   }
 }
   return (
@@ -99,6 +100,7 @@ export default function Auth() {
         >
 
           <div className="space-y-2">
+          {error && <p className="text-red-500">{error}</p>}
             <label className="block text-xs font-medium text-gray-300 mb-1.5">
               Username
             </label>
