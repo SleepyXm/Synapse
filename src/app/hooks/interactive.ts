@@ -66,6 +66,7 @@ async function streamAssistantResponse(
     const response = await fetch(`${API_BASE}/llm/chat/stream?conversation_id=${conversationId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ modelId, hfToken, conversation }),
     });
 
