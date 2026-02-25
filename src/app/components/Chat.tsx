@@ -114,7 +114,6 @@ export default function Chat() {
               setMessages: setCurrentMessages,
               currentConversationId,
               setCurrentConversationId,
-              currentChunk,
               modelId,
               hfToken: activeToken ?? "",
             })
@@ -132,7 +131,6 @@ export default function Chat() {
               setMessages: setCurrentMessages,
               currentConversationId,
               setCurrentConversationId,
-              currentChunk,
               modelId,
               hfToken: activeToken ?? "",
             })
