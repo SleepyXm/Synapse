@@ -45,11 +45,9 @@ function appendUserMessage(
   input: string,
   setInput: React.Dispatch<React.SetStateAction<string>>,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  currentChunk: React.MutableRefObject<Message[]>
 ) {
   const userMessage: Message = { role: "user", content: input };
   setMessages(prev => [...prev, userMessage]);
-  currentChunk.current.push(userMessage);
   setInput("");
   return userMessage;
 }
@@ -60,7 +58,6 @@ async function streamAssistantResponse(
   modelId: string,
   hfToken: string,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  currentChunk: React.MutableRefObject<Message[]>
 ) {
   try {
     const response = await fetch(`${API_BASE}/llm/chat/stream?conversation_id=${conversationId}`, {
@@ -97,8 +94,7 @@ async function streamAssistantResponse(
     }
 
     const assistantMessage: Message = { role: "assistant", content: partial };
-    currentChunk.current.push(assistantMessage);
-    await flushChunk(conversationId, currentChunk);
+
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error("Unknown error");
@@ -106,22 +102,7 @@ async function streamAssistantResponse(
   }
 }
 
-async function flushChunk(conversationId: string, currentChunk: React.MutableRefObject<Message[]>) {
-  if (!conversationId || currentChunk.current.length === 0) return;
-  
-  try {
-    await fetch(`${API_BASE}/conversation/${conversationId}/chunk`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(currentChunk.current),
-    });
-    currentChunk.current = [];
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error("Unknown error");
-    console.error("Error flushing chunk:", error.message);
-  }
-}
+
 
 function getContextMessages(messages: Message[], userMessage: Message, options?: { rootCount?: number; recentCount?: number }) {
   const rootCount = options?.rootCount ?? 2;
@@ -154,19 +135,17 @@ export const sendMessage = async (args: {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   currentConversationId: string | null;
   setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
-  currentChunk: React.MutableRefObject<Message[]>;
   modelId: string;
   hfToken: string;
 }) => {
-  const { input, setInput, messages, setMessages, currentConversationId, setCurrentConversationId, currentChunk, modelId, hfToken } = args;
+  const { input, setInput, messages, setMessages, currentConversationId, setCurrentConversationId, modelId, hfToken } = args;
   if (!input.trim()) return;
 
   const conversationId = await ensureConversation(currentConversationId, setCurrentConversationId, setMessages, modelId);
 
-  const userMessage = appendUserMessage(input, setInput, setMessages, currentChunk);
+  const userMessage = appendUserMessage(input, setInput, setMessages);
 
-  if (currentChunk.current.length >= 5) await flushChunk(conversationId, currentChunk);
 
   const conversationWithMemory = getContextMessages(messages, userMessage, { rootCount: 2, recentCount: 8 });
-  await streamAssistantResponse(conversationId, conversationWithMemory, modelId, hfToken, setMessages, currentChunk);
+  await streamAssistantResponse(conversationId, conversationWithMemory, modelId, hfToken, setMessages);
 };
