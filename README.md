@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Synapse
 
-## Getting Started
+An LLM platform for interacting with Hugging Face models. Requires a Hugging Face API token (BYOK).
 
-First, run the development server:
+## Requirements
+
+- Node.js 18+
+- A Hugging Face account with an API token
+
+## Installation
+
+```bash
+git clone https://github.com/your-org/hubchat.git
+cd hubchat
+npm install
+```
+
+## Configuration
+
+```bash
+cp .env.example .env
+```
+
+```env
+PORT=3000
+```
+
+User-supplied Hugging Face API tokens are saved to a users profile. accessed only when interacting with the model.
+
+## Running
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App runs at `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Enter your Hugging Face API token when prompted
+2. Search for a model available on hugging face
+3. Start a chat session
 
-## Learn More
+## Supported Models
 
-To learn more about Next.js, take a look at the following resources:
+Any model available via the [Hugging Face Inference API](https://huggingface.co/docs/api-inference/index) with chat or text generation support.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+hubchat/
+├── src/
+│   ├── api/      # Hugging Face API client
+│   ├── chat/     # Chat logic
+│   └── ui/       # Frontend
+├── public/
+└── .env.example
+```
 
-## Deploy on Vercel
+## Roadmap
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [x] Chat
+- [ ] More features coming
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
