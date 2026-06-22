@@ -8,14 +8,16 @@ export async function request(path: string, options: RequestInit): Promise<any> 
   });
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || `Request failed with status ${res.status}`);
+  if (!res.ok) {
+  throw new Error(data.error || data.detail || `Request failed with status ${res.status}`);
+}
   return data;
 }
 
 
 export type User = {
   username: string;
-  hf_token: string[];
+  hf_token_names: string[];
 };
 
 const STALE_TIME = 5 * 60 * 1000;
@@ -26,17 +28,27 @@ export async function validateUser(): Promise<User | null> {
     const cached = localStorage.getItem("user");
 
     if (lastCheck && cached && Date.now() - Number(lastCheck) < STALE_TIME) {
-      return JSON.parse(cached);
+      const parsed = JSON.parse(cached);
+
+      return {
+        username: parsed.username,
+        hf_token_names: parsed.hf_token_names ?? [],
+      };
     }
 
     const user = await request("/auth/me", { method: "GET" });
-    if (!user.username) return null;
-    if (!user.hf_token) user.hf_token = [];
 
-    localStorage.setItem("user", JSON.stringify(user));
+    if (!user.username) return null;
+
+    const normalizedUser: User = {
+      username: user.username,
+      hf_token_names: user.hf_token_names ?? [],
+    };
+
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
     localStorage.setItem("user_validated_at", String(Date.now()));
 
-    return user;
+    return normalizedUser;
   } catch {
     return null;
   }

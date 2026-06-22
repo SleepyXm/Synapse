@@ -7,8 +7,11 @@ import { addHfToken, deleteHfToken } from "@/app/types/tokens";
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("account");
   const { user } = useUser();
-  const [hfTokens, setHfTokens] = useState<string[]>([]);
-  const [newToken, setNewToken] = useState("");
+  const [hfTokenNames, setHfTokenNames] = useState<string[]>([]);
+  const [newTokenName, setNewTokenName] = useState("");
+  const [newTokenValue, setNewTokenValue] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -16,13 +19,13 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
-    if (user?.hf_token) setHfTokens(user.hf_token);
-  }, [user?.hf_token]);
+    if (user?.hf_token_names) setHfTokenNames(user.hf_token_names);
+  }, [user?.hf_token_names]);
 
   if (!hydrated) return null;
   if (!user) return <div>Loading...</div>;
 
-  const { username, hf_token } = user;
+  const { username, hf_token_names } = user;
 
   return (
     <div className="min-h-screen flex justify-center items-start pt-[10vh] relative">
@@ -135,26 +138,33 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                
               </div>
 
               <div className="flex flex-col bg-white/5 p-3 rounded-md gap-2 mt-4">
                 <span className="font-medium">HF Tokens:</span>
 
                 <div className="flex flex-col gap-1 max-w-[100%]">
-                  {hfTokens.length ? (
-                    hfTokens.map((token, idx) => (
+                  {hfTokenNames.length ? (
+                    hfTokenNames.map((name) => (
                       <div
-                        key={idx}
+                        key={name}
                         className="flex items-center justify-between bg-white/10 p-1 rounded-md"
                       >
-                        <span className="truncate">{token}</span>
+                        <span className="truncate text-sm">{name}</span>
                         <button
-                          onClick={() => {
-                            deleteHfToken(token); // backend call
-                            setHfTokens((prev) =>
-                              prev.filter((t) => t !== token)
-                            ); // update local state
+                          onClick={async () => {
+                            try {
+                              await deleteHfToken(name);
+                              setHfTokenNames((prev) =>
+                                prev.filter((n) => n !== name),
+                              );
+                            } catch (err) {
+                              setError(
+                                err instanceof Error
+                                  ? err.message
+                                  : "Failed to delete token",
+                              );
+                            }
                           }}
                           className="text-red-500 hover:text-red-600 text-sm"
                         >
@@ -163,29 +173,50 @@ export default function Profile() {
                       </div>
                     ))
                   ) : (
-                    <em>No HF Tokens added</em>
+                    <em className="text-gray-500 text-sm">
+                      No HF Tokens added
+                    </em>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 mt-2 max-w-[100%]">
+                <div className="flex flex-col gap-2 mt-2">
                   <input
                     type="text"
-                    placeholder="Add your HF Token"
-                    className="flex-1 bg-white/10 p-1 rounded-md text-white text-sm"
-                    value={newToken}
-                    onChange={(e) => setNewToken(e.target.value)}
+                    placeholder="Token name (e.g. personal)"
+                    className="bg-white/10 p-1 rounded-md text-white text-sm outline-none focus:ring-1 focus:ring-teal-400"
+                    value={newTokenName}
+                    onChange={(e) => setNewTokenName(e.target.value)}
                   />
-                  <button
-                    onClick={() => {
-                      if (!newToken.trim()) return;
-                      addHfToken(newToken); // backend call
-                      setHfTokens((prev) => [...prev, newToken]); // update local state
-                      setNewToken(""); // clear input
-                    }}
-                    className="bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded-md text-white text-sm"
-                  >
-                    Add
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      placeholder="hf_..."
+                      className="flex-1 bg-white/10 p-1 rounded-md text-white text-sm outline-none focus:ring-1 focus:ring-teal-400"
+                      value={newTokenValue}
+                      onChange={(e) => setNewTokenValue(e.target.value)}
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!newTokenName.trim() || !newTokenValue.trim())
+                          return;
+                        try {
+                          await addHfToken(newTokenName, newTokenValue);
+                          setHfTokenNames((prev) => [...prev, newTokenName]);
+                          setNewTokenName("");
+                          setNewTokenValue("");
+                        } catch (err) {
+                          setError(
+                            err instanceof Error
+                              ? err.message
+                              : "Failed to add token",
+                          );
+                        }
+                      }}
+                      className="bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded-md text-white text-sm"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
               </div>
             </>
@@ -206,12 +237,11 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token}</span>
+                <span className="truncate max-w-[60%]">{hf_token_names}</span>
               </div>
             </>
           )}
@@ -232,12 +262,11 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                 
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token}</span>
+                <span className="truncate max-w-[60%]">{hf_token_names}</span>
               </div>
             </>
           )}
@@ -258,12 +287,11 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                 
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token}</span>
+                <span className="truncate max-w-[60%]">{hf_token_names}</span>
               </div>
             </>
           )}
@@ -283,12 +311,11 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                 
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token}</span>
+                <span className="truncate max-w-[60%]">{hf_token_names}</span>
               </div>
             </>
           )}
@@ -310,12 +337,11 @@ export default function Profile() {
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">Email:</span>
-                 
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
                 <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token}</span>
+                <span className="truncate max-w-[60%]">{hf_token_names}</span>
               </div>
             </>
           )}

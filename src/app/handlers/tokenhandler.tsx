@@ -6,31 +6,46 @@ import { User } from "@/app/types/auth";
 export const useHfTokens = () => {
   const { user, setUser } = useUser();
 
-  const addToken = async (token: string) => {
-    if (!token.trim()) return;
+  const addToken = async (name: string, token: string) => {
+    if (!name.trim() || !token.trim()) return [];
 
-    try {
-      const updatedTokens = await apiAdd(token.trim());
-      setUser(prev => prev ? { ...prev, hf_token: [...updatedTokens] } : null);
-      toast.success("HF Token added!");
-    } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error("Failed to add HF token");
-      toast.error(error.message);
-    }
+    const updatedTokenNames = await apiAdd(name.trim(), token.trim());
+
+    setUser((prev: User | null) =>
+      prev
+        ? {
+            ...prev,
+            hf_token_names: updatedTokenNames,
+          }
+        : null,
+    );
+
+    return updatedTokenNames;
   };
 
-  const deleteToken = async (token: string) => {
-    try {
-      const updatedTokens = await apiDelete(token);
-    setUser((prev: User | null) => prev ? { ...prev, hf_token: [...updatedTokens] } : null);
-    toast.success("HF Token deleted!");
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error("Failed to delete HF token");
-    toast.error(error.message);
-    }
+  const deleteToken = async (name: string) => {
+    if (!name.trim()) return [];
+
+    const updatedTokenNames = await apiDelete(name.trim());
+
+    setUser((prev: User | null) =>
+      prev
+        ? {
+            ...prev,
+            hf_token_names: updatedTokenNames,
+          }
+        : null,
+    );
+
+    return updatedTokenNames;
   };
 
-  const listHfTokens = () => user?.hf_token ?? [];
+  const listHfTokens = () => user?.hf_token_names ?? [];
 
-  return { user, addToken, deleteToken, listHfTokens };
+  return {
+    user,
+    addToken,
+    deleteToken,
+    listHfTokens,
+  };
 };

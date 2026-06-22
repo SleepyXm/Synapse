@@ -72,7 +72,7 @@ async function streamAssistantResponse(
   conversationId: string,
   conversation: Message[],
   modelId: string,
-  hfToken: string,
+  hfTokenName: string,
   settings: ModelSettings,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
 ) {
@@ -80,7 +80,7 @@ async function streamAssistantResponse(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ modelId, hfToken, conversation }),
+    body: JSON.stringify({ modelId, hfTokenName, conversation }),
   });
 
   if (!response.ok) {
@@ -161,10 +161,10 @@ export const sendMessage = async (args: {
   currentConversationId: string | null;
   setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
   modelId: string;
-  hfToken: string;
+  hfTokenName: string;
   settings: ModelSettings;
 }) => {
-  const { input, setInput, messages, setMessages, currentConversationId, setCurrentConversationId, modelId, hfToken, settings } = args;
+  const { input, setInput, messages, setMessages, currentConversationId, setCurrentConversationId, modelId, hfTokenName, settings } = args;
   if (!input.trim()) return;
 
   const conversationId = await ensureConversation(currentConversationId, setCurrentConversationId, setMessages, modelId);
@@ -173,5 +173,5 @@ export const sendMessage = async (args: {
 
 
   const conversationWithMemory = getContextMessages(messages, userMessage, { rootCount: 2, recentCount: 8 });
-  await streamAssistantResponse(conversationId, conversationWithMemory, modelId, hfToken, settings, setMessages);
+  await streamAssistantResponse(conversationId, conversationWithMemory, modelId, hfTokenName, settings, setMessages);
 };

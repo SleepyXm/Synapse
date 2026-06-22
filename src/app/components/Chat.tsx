@@ -149,7 +149,7 @@ export default function Chat({ settings }: ChatProps) {
           currentConversationId,
           setCurrentConversationId,
           modelId,
-          hfToken: activeToken,
+          hfTokenName: activeToken,
           settings,
         }),
       ];
@@ -164,7 +164,7 @@ export default function Chat({ settings }: ChatProps) {
             currentConversationId: compareConversationId,
             setCurrentConversationId: setCompareConversationId,
             modelId: compareModelId,
-            hfToken: activeToken,
+            hfTokenName: activeToken,
             settings,
           }),
         );
