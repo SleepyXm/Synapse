@@ -2,10 +2,12 @@
 
 import Chat from "@/app/components/Chat";
 import Conversation from "@/app/components/Conversations";
+import { DEFAULT_MODEL_SETTINGS } from "@/app/hooks/interactive";
 import Tooling from "@/app/components/Tooling";
+import { useState } from "react";
 
 export default function ChatPage() {
-  
+  const [settings, setSettings] = useState(DEFAULT_MODEL_SETTINGS);
 
  return (
       <div
@@ -17,9 +19,9 @@ export default function ChatPage() {
         ].join(" ")}
       >
         <Conversation />
-        <Chat /> 
+        <Chat settings={settings}/> 
         
-        <Tooling />
+        <Tooling settings={settings} setSettings={setSettings} />
       </div>
     )
   }

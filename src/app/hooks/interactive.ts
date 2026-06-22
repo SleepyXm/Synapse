@@ -4,6 +4,22 @@ import { fetchConversations } from "./conversation";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
+export type ModelSettings = {
+  temperature: number;
+  top_p: number;
+  max_tokens: number;
+  presence_penalty: number;
+  frequency_penalty: number;
+};
+
+export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
+  temperature: 0.7,
+  top_p: 0.95,
+  max_tokens: 1024,
+  presence_penalty: 0,
+  frequency_penalty: 0,
+};
+
 export const handleFavClick = async (
   modelId: string | undefined,
   setIsFav: React.Dispatch<React.SetStateAction<boolean>>
@@ -57,48 +73,57 @@ async function streamAssistantResponse(
   conversation: Message[],
   modelId: string,
   hfToken: string,
+  settings: ModelSettings,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
 ) {
-  try {
-    const response = await fetch(`${API_BASE}/llm/chat/stream?conversation_id=${conversationId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ modelId, hfToken, conversation }),
-    });
+  const response = await fetch(`${API_BASE}/llm/chat/stream?conversation_id=${conversationId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ modelId, hfToken, conversation }),
+  });
 
-    if (!response.body) throw new Error("No response body");
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.error || `Request failed with status ${response.status}`);
+  }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let done = false;
-    let partial = "";
+  if (!response.body) throw new Error("No response body");
 
-    while (!done) {
-      const { value, done: readerDone } = await reader.read();
-      done = readerDone;
-      if (value) {
-        partial += decoder.decode(value, { stream: true });
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let done = false;
+  let partial = "";
 
-        setMessages(prev => {
-          const newMessages = [...prev];
-          const lastMsg = newMessages[newMessages.length - 1];
-          if (lastMsg?.role === "assistant") {
-            lastMsg.content = partial;
-          } else {
-            newMessages.push({ role: "assistant", content: partial });
-          }
-          return newMessages;
-        });
+  while (!done) {
+    const { value, done: readerDone } = await reader.read();
+    done = readerDone;
+    if (value) {
+      partial += decoder.decode(value, { stream: true });
+
+      // catch mid-stream JSON errors before rendering them
+      try {
+        const parsed = JSON.parse(partial);
+        if (parsed?.error) throw new Error(parsed.error);
+      } catch (e) {
+        if (e instanceof SyntaxError) {
+          // not JSON yet, keep streaming
+        } else {
+          throw e;
+        }
       }
+
+      setMessages(prev => {
+        const newMessages = [...prev];
+        const lastMsg = newMessages[newMessages.length - 1];
+        if (lastMsg?.role === "assistant") {
+          lastMsg.content = partial;
+        } else {
+          newMessages.push({ role: "assistant", content: partial });
+        }
+        return newMessages;
+      });
     }
-
-    const assistantMessage: Message = { role: "assistant", content: partial };
-
-
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error("Unknown error");
-    console.error("Error streaming assistant:", error.message);
   }
 }
 
@@ -137,8 +162,9 @@ export const sendMessage = async (args: {
   setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
   modelId: string;
   hfToken: string;
+  settings: ModelSettings;
 }) => {
-  const { input, setInput, messages, setMessages, currentConversationId, setCurrentConversationId, modelId, hfToken } = args;
+  const { input, setInput, messages, setMessages, currentConversationId, setCurrentConversationId, modelId, hfToken, settings } = args;
   if (!input.trim()) return;
 
   const conversationId = await ensureConversation(currentConversationId, setCurrentConversationId, setMessages, modelId);
@@ -147,5 +173,5 @@ export const sendMessage = async (args: {
 
 
   const conversationWithMemory = getContextMessages(messages, userMessage, { rootCount: 2, recentCount: 8 });
-  await streamAssistantResponse(conversationId, conversationWithMemory, modelId, hfToken, setMessages);
+  await streamAssistantResponse(conversationId, conversationWithMemory, modelId, hfToken, settings, setMessages);
 };

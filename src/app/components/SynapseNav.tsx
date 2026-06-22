@@ -1,39 +1,38 @@
 "use client";
+
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useUser } from "../handlers/UserProvider";
 import { logout } from "../types/auth";
-import { useRouter } from "next/navigation";
 
-const Navbar = () => {
-  const { user, setUser } = useUser();
+export default function Navbar() {
+  const { user, setUser, resolved } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
 
   const handleLogout = async () => {
     await logout();
     setUser(null);
-    router.push("/")
+    setMobileOpen(false);
+    router.push("/");
   };
 
   const links = [
     { label: "Home", url: "/" },
     { label: "Guide", url: "/Bullshit" },
     { label: "Stuff", url: "/alsobullshit" },
-    ...(user
-      ? [
-        {
-          label: "Profile",
-          url: "/Profile"
-        },
-          {
-            label: "Sign out", onClick: handleLogout,
-          },
-        ]
-      : [
-          { label: "Sign in", url: "/login", },
-        ]),
+
+    // Prevent hydration mismatch by rendering the logged-out state
+    // until the client-side auth check has finished.
+    ...(!resolved
+      ? [{ label: "Sign in", url: "/login" }]
+      : user
+        ? [
+            { label: "Profile", url: "/Profile" },
+            { label: "Sign out", onClick: handleLogout },
+          ]
+        : [{ label: "Sign in", url: "/login" }]),
   ];
-  // Desktop links
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-black/60 border-b border-white/10">
@@ -146,6 +145,4 @@ const Navbar = () => {
       </div>
     </header>
   );
-};
-
-export default Navbar;
+}

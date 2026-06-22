@@ -14,7 +14,7 @@ export const useConversations = () => {
         });
         if (!res.ok) throw new Error("Failed to fetch conversations");
         const data = await res.json();
-        setConversations(data.conversations);
+        setConversations(Array.isArray(data.conversations) ? data.conversations : []);
       } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error("Unknown error");
         console.error("Error fetching conversations:", error.message);
@@ -24,24 +24,50 @@ export const useConversations = () => {
     fetchConversations();
   }, []);
 
-  return { conversations };
+  const renameConversation = (id: string, title: string) => {
+    setConversations(prev => prev.map(c => c.id === id ? { ...c, title } : c));
+  };
+
+  const removeConversation = (id: string) => {
+    setConversations(prev => prev.filter(c => c.id !== id));
+  };
+
+  return { conversations, renameConversation, removeConversation };
+};
+
+export const updateConversationTitle = async (conversationId: string, title: string) => {
+  const res = await fetch(`${API_BASE}/conversation/${conversationId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.error || `Failed to update conversation`);
+  }
+  return res.json();
+};
+
+export const deleteConversation = async (conversationId: string) => {
+  const res = await fetch(`${API_BASE}/conversation/${conversationId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.error || `Failed to delete conversation`);
+  }
+  return res.json();
 };
 
 export const fetchConversations = async (conversationId: string) => {
-  try {
-    const res = await fetch(`${API_BASE}/conversation/${conversationId}/chunk`, {
-      credentials: "include",
-    });
-
-    if (!res.ok) throw new Error("Failed to fetch conversation");
-
-    const data = await res.json();
-    return data.messages;
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error("Unknown error");
-    console.error("Error fetching conversation:", error.message);
-    return [];
-  }
+  const res = await fetch(`${API_BASE}/conversation/${conversationId}/chunk`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch conversation");
+  const data = await res.json();
+  return data.messages;
 };
 
 const conversationBus = new EventTarget();
@@ -51,11 +77,10 @@ export function emitConversationSelected(id: string) {
 }
 
 export function onConversationSelected(callback: (id: string) => void) {
-  conversationBus.addEventListener(
-    "conversationSelected",
-    (e: Event) => {
-      const event = e as CustomEvent;
-      callback(event.detail);
-    }
-  );
+  const handler = (e: Event) => {
+    const event = e as CustomEvent<string>;
+    callback(event.detail);
+  };
+  conversationBus.addEventListener("conversationSelected", handler);
+  return () => conversationBus.removeEventListener("conversationSelected", handler);
 }
