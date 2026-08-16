@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local RAG corpus (keep private source documents out of git)
+/backend/knowledge/*
+!/backend/knowledge/.gitkeep
+
+# Cloudflare Worker local state and secrets
+/workers/**/.dev.vars*
+!/workers/**/.dev.vars.example
+/workers/**/.wrangler/
