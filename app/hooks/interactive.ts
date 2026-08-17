@@ -70,7 +70,7 @@ function appendUserMessage(
 
 async function streamAssistantResponse(
   conversationId: string,
-  conversation: Message[],
+  newMessages: Message[],
   modelId: string,
   hfTokenName: string,
   settings: ModelSettings,
@@ -80,7 +80,9 @@ async function streamAssistantResponse(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ modelId, hfTokenName, conversation, settings }),
+    // The backend owns conversation memory. Only submit messages created by
+    // this interaction so stored history is not duplicated on every request.
+    body: JSON.stringify({ modelId, hfTokenName, conversation: newMessages, settings }),
   });
 
   if (!response.ok) {
@@ -127,36 +129,9 @@ async function streamAssistantResponse(
   }
 }
 
-
-
-function getContextMessages(messages: Message[], userMessage: Message, options?: { rootCount?: number; recentCount?: number }) {
-  const rootCount = options?.rootCount ?? 2;
-  const recentCount = options?.recentCount ?? 8;
-
-  let memory: Message[] = [];
-
-  if (messages.length <= rootCount + recentCount) {
-    memory = [...messages];
-  } else {
-    memory = [
-      ...messages.slice(0, rootCount),
-      ...messages.slice(-recentCount)
-    ];
-  }
-
-  // Preprocess: trim content
-  const preprocessed = memory.map(msg => ({
-    role: msg.role,
-    content: msg.content.trim(),
-  }));
-
-  return [...preprocessed, userMessage];
-}
-
 export const sendMessage = async (args: {
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
-  messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   currentConversationId: string | null;
   setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -164,7 +139,7 @@ export const sendMessage = async (args: {
   hfTokenName: string;
   settings: ModelSettings;
 }) => {
-  const { input, setInput, messages, setMessages, currentConversationId, setCurrentConversationId, modelId, hfTokenName, settings } = args;
+  const { input, setInput, setMessages, currentConversationId, setCurrentConversationId, modelId, hfTokenName, settings } = args;
   if (!input.trim()) return;
 
   const conversationId = await ensureConversation(currentConversationId, setCurrentConversationId, setMessages, modelId);
@@ -172,6 +147,5 @@ export const sendMessage = async (args: {
   const userMessage = appendUserMessage(input, setInput, setMessages);
 
 
-  const conversationWithMemory = getContextMessages(messages, userMessage, { rootCount: 2, recentCount: 8 });
-  await streamAssistantResponse(conversationId, conversationWithMemory, modelId, hfTokenName, settings, setMessages);
+  await streamAssistantResponse(conversationId, [userMessage], modelId, hfTokenName, settings, setMessages);
 };

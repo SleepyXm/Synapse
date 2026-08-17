@@ -41,8 +41,13 @@ func CreateRefreshToken(userID string) (string, error) {
 		SignedString([]byte(Cfg.SecretKey))
 }
 
-func VerifyToken(tokenStr string) (string, error) {
-	tokenStr = strings.TrimPrefix(tokenStr, "Bearer+")
+// DecodeAccessToken validates the access-token cookie format and rejects every
+// non-access token type, including refresh tokens signed with the same key.
+func DecodeAccessToken(cookieValue string) (string, error) {
+	if !strings.HasPrefix(cookieValue, "Bearer ") {
+		return "", fmt.Errorf("invalid access token format")
+	}
+	tokenStr := strings.TrimPrefix(cookieValue, "Bearer ")
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (any, error) {
 		if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
 			return nil, fmt.Errorf("unexpected signing method")
@@ -53,14 +58,13 @@ func VerifyToken(tokenStr string) (string, error) {
 		return "", fmt.Errorf("invalid token")
 	}
 	claims, ok := token.Claims.(*Claims)
-	if !ok || claims.Sub == "" {
+	if !ok || claims.Sub == "" || claims.Type != "" {
 		return "", fmt.Errorf("invalid claims")
 	}
 	return claims.Sub, nil
 }
 
 func DecodeRefreshToken(tokenStr string) (string, error) {
-	tokenStr = strings.TrimPrefix(tokenStr, "Bearer+")
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (any, error) {
 		if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
 			return nil, fmt.Errorf("unexpected signing method")

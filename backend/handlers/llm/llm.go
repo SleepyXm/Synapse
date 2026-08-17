@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -101,6 +102,13 @@ func ChatStream(db *sql.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
+		// Conversation history belongs to the backend. The public chat endpoint
+		// accepts exactly one new user turn so clients cannot re-persist history or
+		// inject messages under privileged roles.
+		if len(req.Conversation) != 1 || req.Conversation[0].Role != "user" || strings.TrimSpace(req.Conversation[0].Content) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "conversation must contain exactly one non-empty user message"})
+			return
+		}
 
 		if strings.TrimSpace(req.HFTokenName) == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "hfTokenName required"})
@@ -136,7 +144,10 @@ func ChatStream(db *sql.DB) gin.HandlerFunc {
 		}
 
 		manager.Append(newMessages)
-		go manager.Persist(db)
+		if err := manager.Persist(db); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save conversation"})
+			return
+		}
 
 		payload, err := json.Marshal(structs.OpenAIRequest{
 			Model:            req.ModelID,
@@ -153,8 +164,9 @@ func ChatStream(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		httpReq, err := http.NewRequest(
-			"POST",
+		httpReq, err := http.NewRequestWithContext(
+			c.Request.Context(),
+			http.MethodPost,
 			"https://router.huggingface.co/v1/chat/completions",
 			bytes.NewBuffer(payload),
 		)
@@ -189,7 +201,7 @@ func ChatStream(db *sql.DB) gin.HandlerFunc {
 		c.Header("Transfer-Encoding", "chunked")
 		c.Status(http.StatusOK)
 
-		var assistantContent string
+		var assistantContent strings.Builder
 		scanner := bufio.NewScanner(resp.Body)
 
 		for scanner.Scan() {
@@ -208,7 +220,7 @@ func ChatStream(db *sql.DB) gin.HandlerFunc {
 				if len(chunk.Choices) > 0 {
 					delta := chunk.Choices[0].Delta.Content
 					if delta != "" {
-						assistantContent += delta
+						assistantContent.WriteString(delta)
 						fmt.Fprint(c.Writer, delta)
 						c.Writer.Flush()
 					}
@@ -217,15 +229,17 @@ func ChatStream(db *sql.DB) gin.HandlerFunc {
 		}
 
 		if err := scanner.Err(); err != nil {
-			fmt.Println("stream scanner error:", err.Error())
+			log.Printf("stream scanner error: %v", err)
+		}
+
+		manager.Append([]map[string]any{
+			{"role": "assistant", "content": assistantContent.String()},
+		})
+		if err := manager.Persist(db); err != nil {
+			log.Printf("failed to save assistant response for conversation %s: %v", conversationID, err)
 		}
 
 		go func() {
-			manager.Append([]map[string]any{
-				{"role": "assistant", "content": assistantContent},
-			})
-			manager.Persist(db)
-
 			var existingTitle *string
 			err := db.QueryRow(
 				"SELECT title FROM conversations WHERE id = $1",
@@ -257,13 +271,4 @@ func ChatStream(db *sql.DB) gin.HandlerFunc {
 			)
 		}()
 	}
-}
-
-func latestUserMessage(messages []structs.Message) string {
-	for index := len(messages) - 1; index >= 0; index-- {
-		if messages[index].Role == "user" {
-			return messages[index].Content
-		}
-	}
-	return ""
 }

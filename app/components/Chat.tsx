@@ -144,7 +144,6 @@ export default function Chat({ settings }: ChatProps) {
         sendMessage({
           input,
           setInput,
-          messages: currentMessages,
           setMessages: setCurrentMessages,
           currentConversationId,
           setCurrentConversationId,
@@ -159,7 +158,6 @@ export default function Chat({ settings }: ChatProps) {
           sendMessage({
             input,
             setInput: () => {}, // left side already clears it
-            messages: compareCurrentMessages,
             setMessages: setCompareCurrentMessages,
             currentConversationId: compareConversationId,
             setCurrentConversationId: setCompareConversationId,

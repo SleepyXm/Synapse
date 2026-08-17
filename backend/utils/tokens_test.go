@@ -32,3 +32,28 @@ func TestAuthCookiePolicy(t *testing.T) {
 		})
 	}
 }
+
+func TestDecodeAccessTokenRejectsRefreshToken(t *testing.T) {
+	previousConfig := Cfg
+	t.Cleanup(func() { Cfg = previousConfig })
+	Cfg.SecretKey = "test-secret"
+	Cfg.AccessTokenExpireMinutes = 15
+	Cfg.RefreshTokenExpireDays = 7
+
+	accessToken, err := CreateAccessToken("user-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	userID, err := DecodeAccessToken("Bearer " + accessToken)
+	if err != nil || userID != "user-1" {
+		t.Fatalf("valid access token decoded as user %q with error %v", userID, err)
+	}
+
+	refreshToken, err := CreateRefreshToken("user-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeAccessToken("Bearer " + refreshToken); err == nil {
+		t.Fatal("refresh token was accepted as an access token")
+	}
+}
