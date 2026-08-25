@@ -37,10 +37,14 @@ async function responseBody(response: Response): Promise<unknown> {
 }
 
 export async function request<T = unknown>(path: string, options: RequestInit, isRetry = false): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
   const res = await fetch(apiUrl(path), {
     ...options,
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    headers,
   });
 
   const skipRefresh = ["/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout"];
@@ -62,10 +66,13 @@ export async function request<T = unknown>(path: string, options: RequestInit, i
   const data = await responseBody(res);
   const payload = asPayload(data);
   if (!res.ok) {
+    const nestedError = asPayload(payload.error);
     const message = typeof payload.detail === "string"
       ? payload.detail
       : typeof payload.error === "string"
         ? payload.error
+        : typeof nestedError.message === "string"
+          ? nestedError.message
         : `Request failed with status ${res.status}`;
     throw new ApiError(message, res.status, payload);
   }

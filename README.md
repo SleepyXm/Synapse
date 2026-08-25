@@ -1,6 +1,6 @@
 # Synapse
 
-Compare and converse with Hugging Face models from one interface.
+Compare and converse with Hugging Face models, attach private knowledge, and run bounded tool-using agents from one interface.
 
 Synapse streams model responses side by side, stores conversation history, and lets users bring their own Hugging Face credentials.
 
@@ -17,28 +17,33 @@ Recent conversation messages are loaded by the Go backend and stored as compress
 **BYOK**
 Bring your own Hugging Face API token. Tokens are stored against your profile and only accessed at inference time.
 
+**Knowledge network**
+Upload PDF, Markdown, or text sources into a local private object store. A durable worker extracts PDF text with Poppler, chunks it with LangChainGo, creates Hugging Face embeddings, and persists exact cosine-searchable vectors in PostgreSQL with pgvector.
+
+**Bounded agents**
+Save a model, instructions, knowledge access, and step limits. Normal chat and saved agents share the same runtime and can call the approved `knowledge_search` tool.
+
 ---
 
 ## Stack
 
-`Go` `Next.js` `PostgreSQL` `AWS EC2`
+`Go` `LangChainGo` `Next.js` `PostgreSQL` `pgvector`
 
 The Next.js interface communicates with the Go API for authentication, conversations, model requests, and token management.
 
 ---
 
 ## Requirements
-- Hugging Face account with API token
 
-## Document preparation status
+- PostgreSQL with the [pgvector extension](https://github.com/pgvector/pgvector)
+- Hugging Face account with an API token
+- Poppler's `pdftotext` executable for text-based PDF extraction
 
-`backend/rag` contains the first active backend foundation for document ingestion:
+Apply the database changes with `cd backend && alembic upgrade head` before starting the API. Local source files are written beneath `backend/knowledge/` by default and are ignored by Git. Set `RAG_OBJECT_ROOT` to move that private storage root.
 
-- LangChainGo recursive text chunking with explicit rune-based size settings.
-- Batched Hugging Face feature-extraction requests.
-- Source and embedding-model identity on prepared chunks.
+Use `/knowledge` to create a knowledge base, upload a document, observe ingestion, and test retrieval. Use `/agents` to save a bounded configuration. A selected knowledge base is exposed to chat as a short name/description manifest; retrieved chunks enter model context only through `knowledge_search` and are displayed separately as evidence cards.
 
-This is not yet a complete RAG feature. There is currently no document parser, vector store, retrieval policy, chat grounding, or frontend document workflow.
+Image-only PDFs fail with an explicit OCR-required status. OCR, R2 storage, approximate vector indexes, classifiers, and additional tools are intentionally outside this version.
 
 
 ---

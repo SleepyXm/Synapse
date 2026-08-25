@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import rehypeHighlight from "rehype-highlight";
 import ReactMarkdown from "react-markdown";
@@ -15,6 +15,10 @@ import {
 } from "../hooks/conversation";
 import Popup from "@/app/components/errorpopup";
 import MiniModelSearch from "./MiniSearch";
+import KnowledgePicker from "./KnowledgePicker";
+import RunTrace from "./RunTrace";
+import { Agent, listAgents } from "@/app/handlers/agents";
+import { EMPTY_RUN_TRACE, reduceRunTrace, RunTraceState } from "@/app/handlers/runs";
 
 type ChatProps = {
   settings: ModelSettings;
@@ -52,6 +56,11 @@ export default function Chat({ settings }: ChatProps) {
   const compareScrollContainerRef = useRef<HTMLDivElement>(null);
   const compareMessagesEndRef = useRef<HTMLDivElement>(null);
   const [compareAutoScroll, setCompareAutoScroll] = useState(true);
+  const [knowledgeBaseIds, setKnowledgeBaseIds] = useState<string[]>([]);
+  const [savedAgents, setSavedAgents] = useState<Agent[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState("");
+  const [runTrace, setRunTrace] = useState<RunTraceState>(EMPTY_RUN_TRACE);
+  const [compareRunTrace, setCompareRunTrace] = useState<RunTraceState>(EMPTY_RUN_TRACE);
 
   const handleCompareScroll = () => {
     const el = compareScrollContainerRef.current;
@@ -93,6 +102,10 @@ export default function Chat({ settings }: ChatProps) {
   }, [listHfTokens]);
 
   useEffect(() => {
+    listAgents().then(setSavedAgents).catch(() => setSavedAgents([]));
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onConversationSelected(async (id) => {
       try {
         const msgs = await fetchConversations(id);
@@ -114,7 +127,10 @@ export default function Chat({ settings }: ChatProps) {
       compareMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [compareCurrentMessages, compareAutoScroll]);
 
-  const allMessages = [...loadedMessages, ...currentMessages];
+  const allMessages = useMemo(
+    () => [...loadedMessages, ...currentMessages],
+    [loadedMessages, currentMessages],
+  );
 
   useEffect(() => {
     if (autoScroll) {
@@ -128,7 +144,7 @@ export default function Chat({ settings }: ChatProps) {
       setError("Message cannot be empty.");
       return;
     }
-    if (!activeToken) {
+    if (!selectedAgentId && !activeToken) {
       setError("No Hugging Face token selected.");
       return;
     }
@@ -139,6 +155,10 @@ export default function Chat({ settings }: ChatProps) {
     try {
       setSending(true);
       setError("");
+      setRunTrace({ status: "running", evidence: [] });
+      if (compareModelId) setCompareRunTrace({ status: "running", evidence: [] });
+
+      const selectedAgent = savedAgents.find((agent) => agent.id === selectedAgentId);
 
       const sends: Promise<void>[] = [
         sendMessage({
@@ -147,9 +167,12 @@ export default function Chat({ settings }: ChatProps) {
           setMessages: setCurrentMessages,
           currentConversationId,
           setCurrentConversationId,
-          modelId,
+          modelId: selectedAgent?.model_id ?? modelId,
           hfTokenName: activeToken,
           settings,
+          knowledgeBaseIds,
+          agentId: selectedAgentId || undefined,
+          onRunEvent: (event) => setRunTrace((current) => reduceRunTrace(current, event)),
         }),
       ];
 
@@ -164,6 +187,8 @@ export default function Chat({ settings }: ChatProps) {
             modelId: compareModelId,
             hfTokenName: activeToken,
             settings,
+            knowledgeBaseIds,
+            onRunEvent: (event) => setCompareRunTrace((current) => reduceRunTrace(current, event)),
           }),
         );
       }
@@ -214,12 +239,13 @@ export default function Chat({ settings }: ChatProps) {
         {isFav ? "★" : "☆"}
       </button>
       <button
+        disabled={Boolean(selectedAgentId)}
         onClick={() =>
           compareModelId
             ? setCompareModelId(null)
             : setShowSearch((prev) => !prev)
         }
-        className="text-xs px-2 py-1 rounded-lg bg-white/10 hover:bg-teal-500/30 text-gray-300 hover:text-white transition"
+        className="text-xs px-2 py-1 rounded-lg bg-white/10 hover:bg-teal-500/30 text-gray-300 hover:text-white transition disabled:opacity-40 disabled:hover:bg-white/10"
       >
         {compareModelId ? "✕ Stop comparing" : "Compare"}
       </button>
@@ -273,6 +299,7 @@ export default function Chat({ settings }: ChatProps) {
           })}
           <div ref={messagesEndRef} />
         </div>
+        <RunTrace trace={runTrace} />
       </div>
 
       {/* Right / compare panel */}
@@ -310,11 +337,38 @@ export default function Chat({ settings }: ChatProps) {
             })}
             <div ref={compareMessagesEndRef} />
           </div>
+          <RunTrace trace={compareRunTrace} />
         </div>
       )}
     </div>
 
-    {hfTokens.length > 0 && (
+    <div className="mb-2 grid gap-2 rounded-xl border border-white/10 bg-white/5 p-2 md:grid-cols-[220px_1fr]">
+      <label className="text-[11px] text-white/45">
+        Saved agent (optional)
+        <select
+          value={selectedAgentId}
+          onChange={(event) => {
+            setSelectedAgentId(event.target.value);
+            if (event.target.value) {
+              setCompareModelId(null);
+              setShowSearch(false);
+            }
+          }}
+          className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-900 p-2 text-xs text-white"
+        >
+          <option value="">Normal chat</option>
+          {savedAgents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
+        </select>
+      </label>
+      <div>
+        <p className="mb-1 text-[11px] text-white/45">
+          {selectedAgentId ? "Knowledge is fixed by the saved agent profile." : "Knowledge available to this chat"}
+        </p>
+        <KnowledgePicker selected={knowledgeBaseIds} onChange={setKnowledgeBaseIds} disabled={Boolean(selectedAgentId)} compact />
+      </div>
+    </div>
+
+    {!selectedAgentId && hfTokens.length > 0 && (
       <select
         value={activeToken}
         onChange={(e) => setActiveToken(e.target.value)}

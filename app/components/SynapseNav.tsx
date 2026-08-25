@@ -19,8 +19,6 @@ export default function Navbar() {
 
   const links = [
     { label: "Home", url: "/" },
-    { label: "Guide", url: "/Bullshit" },
-    { label: "Stuff", url: "/alsobullshit" },
 
     // Prevent hydration mismatch by rendering the logged-out state
     // until the client-side auth check has finished.
@@ -28,6 +26,8 @@ export default function Navbar() {
       ? [{ label: "Sign in", url: "/login" }]
       : user
         ? [
+            { label: "Knowledge", url: "/knowledge" },
+            { label: "Agents", url: "/agents" },
             { label: "Profile", url: "/Profile" },
             { label: "Sign out", onClick: handleLogout },
           ]
@@ -132,12 +132,19 @@ export default function Navbar() {
           <ul className="absolute top-full left-0 w-full bg-neutral-900/70 ring-1 ring-white/10 backdrop-blur p-4 md:hidden flex flex-col gap-2 text-sm font-medium text-white/60">
             {links.map((link) => (
               <li key={link.label}>
-                <a
-                  href={link.url}
-                  className="w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5 "
-                >
-                  {link.label}
-                </a>
+                {link.url ? (
+                  <a
+                    href={link.url}
+                    className="block w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <button onClick={link.onClick} className="w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5">
+                    {link.label}
+                  </button>
+                )}
               </li>
             ))}
           </ul>

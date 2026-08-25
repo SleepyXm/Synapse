@@ -1,5 +1,6 @@
 import { addFavLLM } from "@/app/handlers/fav";
 import { Message, createConversation } from "@/app/handlers/chat";
+import { consumeRunStream, RunEvent } from "@/app/handlers/runs";
 import { fetchConversations } from "./conversation";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
@@ -70,63 +71,63 @@ function appendUserMessage(
 
 async function streamAssistantResponse(
   conversationId: string,
-  newMessages: Message[],
+  input: string,
   modelId: string,
-  hfTokenName: string,
+  hfTokenName: string | undefined,
   settings: ModelSettings,
+  knowledgeBaseIds: string[],
+  agentId: string | undefined,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  onRunEvent?: (event: RunEvent) => void,
 ) {
-  const response = await fetch(`${API_BASE}/api/llm/chat/stream?conversation_id=${conversationId}`, {
+  if (!API_BASE) throw new Error("API server is not configured.");
+  const endpoint = agentId
+    ? `${API_BASE}/api/agents/${agentId}/runs/stream`
+    : `${API_BASE}/api/llm/chat/stream`;
+  const body = agentId
+    ? { conversation_id: conversationId, input }
+    : {
+        conversation_id: conversationId,
+        input,
+        model_id: modelId,
+        hf_token_name: hfTokenName,
+        knowledge_base_ids: knowledgeBaseIds,
+        settings,
+      };
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    // The backend owns conversation memory. Only submit messages created by
-    // this interaction so stored history is not duplicated on every request.
-    body: JSON.stringify({ modelId, hfTokenName, conversation: newMessages, settings }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => null);
-    throw new Error(data?.error || `Request failed with status ${response.status}`);
+    throw new Error(data?.error?.message || data?.error || `Request failed with status ${response.status}`);
   }
 
-  if (!response.body) throw new Error("No response body");
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let done = false;
-  let partial = "";
-
-  while (!done) {
-    const { value, done: readerDone } = await reader.read();
-    done = readerDone;
-    if (value) {
-      partial += decoder.decode(value, { stream: true });
-
-      // catch mid-stream JSON errors before rendering them
-      try {
-        const parsed = JSON.parse(partial);
-        if (parsed?.error) throw new Error(parsed.error);
-      } catch (e) {
-        if (e instanceof SyntaxError) {
-          // not JSON yet, keep streaming
-        } else {
-          throw e;
-        }
-      }
-
+  let streamFailure = "";
+  await consumeRunStream(response, (event) => {
+    onRunEvent?.(event);
+    if (event.type === "assistant.delta") {
+      const delta = String(event.data.text ?? "");
+      if (!delta) return;
       setMessages(prev => {
-        const newMessages = [...prev];
-        const lastMsg = newMessages[newMessages.length - 1];
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
         if (lastMsg?.role === "assistant") {
-          lastMsg.content = partial;
+          updated[updated.length - 1] = { ...lastMsg, content: `${lastMsg.content ?? ""}${delta}` };
         } else {
-          newMessages.push({ role: "assistant", content: partial });
+          updated.push({ role: "assistant", content: delta });
         }
-        return newMessages;
+        return updated;
       });
     }
-  }
+    if (event.type === "run.failed") {
+      streamFailure = String(event.data.message ?? "The model run failed.");
+    }
+  });
+  if (streamFailure) throw new Error(streamFailure);
 }
 
 export const sendMessage = async (args: {
@@ -136,16 +137,31 @@ export const sendMessage = async (args: {
   currentConversationId: string | null;
   setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
   modelId: string;
-  hfTokenName: string;
+  hfTokenName?: string;
   settings: ModelSettings;
+  knowledgeBaseIds?: string[];
+  agentId?: string;
+  onRunEvent?: (event: RunEvent) => void;
 }) => {
-  const { input, setInput, setMessages, currentConversationId, setCurrentConversationId, modelId, hfTokenName, settings } = args;
+  const {
+    input, setInput, setMessages, currentConversationId, setCurrentConversationId,
+    modelId, hfTokenName, settings, knowledgeBaseIds = [], agentId, onRunEvent,
+  } = args;
   if (!input.trim()) return;
+  if (!agentId && !hfTokenName) throw new Error("No Hugging Face token selected.");
 
   const conversationId = await ensureConversation(currentConversationId, setCurrentConversationId, setMessages, modelId);
 
-  const userMessage = appendUserMessage(input, setInput, setMessages);
-
-
-  await streamAssistantResponse(conversationId, [userMessage], modelId, hfTokenName, settings, setMessages);
+  appendUserMessage(input, setInput, setMessages);
+  await streamAssistantResponse(
+    conversationId,
+    input.trim(),
+    modelId,
+    hfTokenName,
+    settings,
+    knowledgeBaseIds,
+    agentId,
+    setMessages,
+    onRunEvent,
+  );
 };
