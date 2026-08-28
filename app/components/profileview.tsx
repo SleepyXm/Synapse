@@ -1,4 +1,4 @@
-import { logout } from "../handlers/auth";
+import { logout } from "@/app/components/handlers/auth";
 
 type User = {
   username: string;

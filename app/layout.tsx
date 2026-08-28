@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "./components/SynapseNav";
-import { UserProvider } from "./provider/UserProvider";
-import NeuralGridBackground from "./components/NeuralGridBackground";
+import { UserProvider } from "@/app/components/provider/UserProvider";
+import NeuralGridBackground from "./UI/NeuralGridBackground";
 import { jetBrainsMono } from "./assets/fonts";
 
 

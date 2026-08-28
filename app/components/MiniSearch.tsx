@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Model } from "../types/models";
+import { Model } from "@/app/components/types/models";
 
 type MiniModelSearchProps = {
   onSelect: (modelId: string) => void;

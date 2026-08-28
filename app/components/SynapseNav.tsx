@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUser } from "../provider/UserProvider";
-import { logout } from "../handlers/auth";
+import { useUser } from "@/app/components/provider/UserProvider";
+import { logout } from "@/app/components/handlers/auth";
 
 export default function Navbar() {
   const { user, setUser, resolved } = useUser();
