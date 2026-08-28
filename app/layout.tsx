@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "./components/SynapseNav";
 import { UserProvider } from "./provider/UserProvider";
-import AuraBackground2 from "./assets/background2";
+import NeuralGridBackground from "./components/NeuralGridBackground";
 import { jetBrainsMono } from "./assets/fonts";
 
 
@@ -17,14 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${jetBrainsMono.className} antialiased`}>
-        <div className="relative w-full h-full bg-gray-300/20">
-        <AuraBackground2 />
-        <UserProvider>
-          <Navbar />
-
+        <div className="relative isolate min-h-screen w-full bg-gray-200/50">
+          <NeuralGridBackground />
+          <UserProvider>
+            <Navbar />
             {children}
-
-        </UserProvider>
+          </UserProvider>
         </div>
       </body>
     </html>

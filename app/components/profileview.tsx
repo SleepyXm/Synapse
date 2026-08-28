@@ -12,7 +12,7 @@ export default function ProfileView({ user }: { user: User | null }) {
           className="
           w-[60%] md:w-[80%] h-[85vh]
           rounded-2xl
-          border border-white/10 bg-black/60
+          border border-white/10 bg-black/30
           backdrop-blur p-6 shadow-2xl
           flex flex-col gap-4
         "
@@ -24,7 +24,7 @@ export default function ProfileView({ user }: { user: User | null }) {
 
   return (
     <div className="flex justify-center items-start w-full h-full mt-[11%]">
-      <div className="w-[60%] md:w-[80%] h-[85vh] rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-6 shadow-2xl flex flex-col gap-4">
+      <div className="w-[60%] md:w-[80%] h-[85vh] rounded-2xl border border-white/10 bg-black/35 backdrop-blur p-6 shadow-2xl flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

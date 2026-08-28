@@ -13,7 +13,7 @@ import (
 func RegisterConversationRoutes(rg *gin.RouterGroup, db *sql.DB) {
 	auth := middleware.AuthMiddleware(db)
 
-	rg.POST("/create", auth, handlers.CreateConversation(db))
+	rg.POST("/create", auth, handlers.CreateConversation())
 	rg.GET("/list", auth, handlers.ListConversations(db))
 	rg.DELETE("/:conversation_id", auth, handlers.DeleteConversation(db))
 	rg.PATCH("/:conversation_id", auth, handlers.UpdateConversation(db))

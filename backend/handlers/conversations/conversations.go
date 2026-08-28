@@ -2,14 +2,28 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"Synapse/structs"
+	"Synapse/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+const temporaryConversationTTL = 30 * time.Minute
+
+type conversationDraft struct {
+	Title    string `json:"title"`
+	LLMModel string `json:"llm_model"`
+}
+
+func temporaryConversationKey(userID, conversationID string) string {
+	return "conversation:draft:" + userID + ":" + conversationID
+}
 
 func LoadChunks(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -17,7 +31,7 @@ func LoadChunks(db *sql.DB) gin.HandlerFunc {
 		userID := c.GetString("userID")
 
 		manager := NewConversationManager(conversationID, userID)
-		if err := manager.Load(db); err != nil {
+		if err := manager.LoadOrCreate(c, db); err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
@@ -52,7 +66,7 @@ func ListConversations(db *sql.DB) gin.HandlerFunc {
 		}
 		defer rows.Close()
 
-		var conversations []gin.H
+		conversations := []gin.H{}
 		for rows.Next() {
 			var id, title, llmModel string
 			var createdAt time.Time
@@ -72,28 +86,35 @@ func ListConversations(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func CreateConversation(db *sql.DB) gin.HandlerFunc {
+func CreateConversation() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID := c.GetString("userID")
-
 		var req structs.CreateConversationRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "title and llm_model are required"})
+			return
+		}
+		req.Title = strings.TrimSpace(req.Title)
+		req.LLMModel = strings.TrimSpace(req.LLMModel)
+		if req.Title == "" || req.LLMModel == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "title and llm_model are required"})
 			return
 		}
 
 		conversationID := uuid.New().String()
-		_, err := db.Exec(
-			`INSERT INTO conversations (id, user_id, llm_model, title, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, NOW(), NOW())`,
-			conversationID, userID, req.LLMModel, req.Title,
-		)
+		draft, err := json.Marshal(conversationDraft{Title: req.Title, LLMModel: req.LLMModel})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create conversation"})
 			return
 		}
+		key := temporaryConversationKey(c.GetString("userID"), conversationID)
+		if err := utils.RDB.SetEx(c, key, draft, temporaryConversationTTL).Err(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create conversation"})
+			return
+		}
 
-		c.JSON(http.StatusOK, gin.H{"id": conversationID})
+		c.JSON(http.StatusCreated, gin.H{
+			"id": conversationID, "title": req.Title, "llm_model": req.LLMModel,
+		})
 	}
 }
 

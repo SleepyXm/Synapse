@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import rehypeHighlight from "rehype-highlight";
 import ReactMarkdown from "react-markdown";
@@ -7,24 +7,25 @@ import {
   sendMessage,
   ModelSettings,
 } from "@/app/hooks/interactive";
-import { Message } from "@/app/handlers/chat";
+import { createTemporaryConversation, Message } from "@/app/handlers/chat";
 import { useHfTokens } from "@/app/handlers/tokenhandler";
 import {
+  emitConversationCreated,
+  emitConversationSelected,
   onConversationSelected,
-  fetchConversations,
+  fetchConversationMessages,
+  onNewConversationRequested,
 } from "../hooks/conversation";
 import Popup from "@/app/components/errorpopup";
 import MiniModelSearch from "./MiniSearch";
-import KnowledgePicker from "./KnowledgePicker";
-import RunTrace from "./RunTrace";
-import { Agent, listAgents } from "@/app/handlers/agents";
-import { EMPTY_RUN_TRACE, reduceRunTrace, RunTraceState } from "@/app/handlers/runs";
+import JitterLoader from "./JitterLoader";
 
 type ChatProps = {
   settings: ModelSettings;
+  customisationId: string;
 };
 
-export default function Chat({ settings }: ChatProps) {
+export default function Chat({ settings, customisationId }: ChatProps) {
   const params = useParams();
 
   const author = String(params.author ?? "");
@@ -39,9 +40,11 @@ export default function Chat({ settings }: ChatProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [sending, setSending] = useState(false);
+  const [conversationLoadState, setConversationLoadState] = useState<"idle" | "loading" | "failed">("idle");
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const conversationLoadRequest = useRef(0);
   const [autoScroll, setAutoScroll] = useState(true);
 
   const [compareModelId, setCompareModelId] = useState<string | null>(null);
@@ -56,11 +59,6 @@ export default function Chat({ settings }: ChatProps) {
   const compareScrollContainerRef = useRef<HTMLDivElement>(null);
   const compareMessagesEndRef = useRef<HTMLDivElement>(null);
   const [compareAutoScroll, setCompareAutoScroll] = useState(true);
-  const [knowledgeBaseIds, setKnowledgeBaseIds] = useState<string[]>([]);
-  const [savedAgents, setSavedAgents] = useState<Agent[]>([]);
-  const [selectedAgentId, setSelectedAgentId] = useState("");
-  const [runTrace, setRunTrace] = useState<RunTraceState>(EMPTY_RUN_TRACE);
-  const [compareRunTrace, setCompareRunTrace] = useState<RunTraceState>(EMPTY_RUN_TRACE);
 
   const handleCompareScroll = () => {
     const el = compareScrollContainerRef.current;
@@ -102,35 +100,49 @@ export default function Chat({ settings }: ChatProps) {
   }, [listHfTokens]);
 
   useEffect(() => {
-    listAgents().then(setSavedAgents).catch(() => setSavedAgents([]));
-  }, []);
-
-  useEffect(() => {
     const unsubscribe = onConversationSelected(async (id) => {
+      const requestID = ++conversationLoadRequest.current;
+      setCurrentConversationId(id);
+      setLoadedMessages([]);
+      setCurrentMessages([]);
+      setConversationLoadState("loading");
       try {
-        const msgs = await fetchConversations(id);
+        const msgs = await fetchConversationMessages(id);
+        if (requestID !== conversationLoadRequest.current) return;
         setLoadedMessages(msgs);
-        setCurrentMessages([]);
-        setCurrentConversationId(id);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to load conversation";
-        setError(message);
+        setConversationLoadState("idle");
+      } catch {
+        if (requestID !== conversationLoadRequest.current) return;
+        setConversationLoadState("failed");
       }
     });
 
     return unsubscribe;
   }, []);
 
+  useEffect(() => onNewConversationRequested(() => {
+    void (async () => {
+      try {
+        setError("");
+        conversationLoadRequest.current += 1;
+        const conversation = await createTemporaryConversation(modelId);
+        setLoadedMessages([]);
+        setCurrentMessages([]);
+        setCurrentConversationId(conversation.id);
+        setConversationLoadState("idle");
+        emitConversationCreated(conversation);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to create conversation");
+      }
+    })();
+  }), [modelId]);
+
   useEffect(() => {
     if (compareAutoScroll)
       compareMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [compareCurrentMessages, compareAutoScroll]);
 
-  const allMessages = useMemo(
-    () => [...loadedMessages, ...currentMessages],
-    [loadedMessages, currentMessages],
-  );
+  const allMessages = [...loadedMessages, ...currentMessages];
 
   useEffect(() => {
     if (autoScroll) {
@@ -144,7 +156,7 @@ export default function Chat({ settings }: ChatProps) {
       setError("Message cannot be empty.");
       return;
     }
-    if (!selectedAgentId && !activeToken) {
+    if (!activeToken) {
       setError("No Hugging Face token selected.");
       return;
     }
@@ -155,10 +167,6 @@ export default function Chat({ settings }: ChatProps) {
     try {
       setSending(true);
       setError("");
-      setRunTrace({ status: "running", evidence: [] });
-      if (compareModelId) setCompareRunTrace({ status: "running", evidence: [] });
-
-      const selectedAgent = savedAgents.find((agent) => agent.id === selectedAgentId);
 
       const sends: Promise<void>[] = [
         sendMessage({
@@ -167,12 +175,10 @@ export default function Chat({ settings }: ChatProps) {
           setMessages: setCurrentMessages,
           currentConversationId,
           setCurrentConversationId,
-          modelId: selectedAgent?.model_id ?? modelId,
+          modelId,
           hfTokenName: activeToken,
           settings,
-          knowledgeBaseIds,
-          agentId: selectedAgentId || undefined,
-          onRunEvent: (event) => setRunTrace((current) => reduceRunTrace(current, event)),
+          customisationId,
         }),
       ];
 
@@ -187,8 +193,7 @@ export default function Chat({ settings }: ChatProps) {
             modelId: compareModelId,
             hfTokenName: activeToken,
             settings,
-            knowledgeBaseIds,
-            onRunEvent: (event) => setCompareRunTrace((current) => reduceRunTrace(current, event)),
+            customisationId,
           }),
         );
       }
@@ -216,7 +221,7 @@ export default function Chat({ settings }: ChatProps) {
   };
 
   return (
-  <div className="bg-black/60 backdrop-blur p-2 flex flex-1 flex-col h-[94vh] mt-20">
+  <div className="bg-black/35 backdrop-blur p-2 flex flex-1 flex-col h-[94vh] mt-20">
     {error && <Popup message={error} onClose={() => setError("")} />}
     {success && (
       <Popup message={success} onClose={() => setSuccess("")} type="success" />
@@ -239,13 +244,12 @@ export default function Chat({ settings }: ChatProps) {
         {isFav ? "★" : "☆"}
       </button>
       <button
-        disabled={Boolean(selectedAgentId)}
         onClick={() =>
           compareModelId
             ? setCompareModelId(null)
             : setShowSearch((prev) => !prev)
         }
-        className="text-xs px-2 py-1 rounded-lg bg-white/10 hover:bg-teal-500/30 text-gray-300 hover:text-white transition disabled:opacity-40 disabled:hover:bg-white/10"
+        className="text-xs px-2 py-1 rounded-lg bg-white/10 hover:bg-teal-500/30 text-gray-300 hover:text-white transition"
       >
         {compareModelId ? "✕ Stop comparing" : "Compare"}
       </button>
@@ -275,7 +279,20 @@ export default function Chat({ settings }: ChatProps) {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto px-2 pb-2 flex flex-col"
         >
-          {allMessages.map((m, i) => {
+          {conversationLoadState === "loading" ? (
+            <JitterLoader message="Loading messages…" className="flex-1" />
+          ) : conversationLoadState === "failed" ? (
+            <div role="alert" className="m-auto rounded-lg border border-red-300/20 bg-red-300/5 p-4 text-center text-sm text-gray-300">
+              <p>This conversation exists, but its messages did not load.</p>
+              <button
+                type="button"
+                onClick={() => currentConversationId && emitConversationSelected(currentConversationId)}
+                className="mt-2 text-teal-300 hover:text-teal-200"
+              >
+                Try again
+              </button>
+            </div>
+          ) : allMessages.map((m, i) => {
             const role = m.message?.role ?? m.role;
             const content = m.message?.content ?? m.content ?? "";
             return (
@@ -299,7 +316,6 @@ export default function Chat({ settings }: ChatProps) {
           })}
           <div ref={messagesEndRef} />
         </div>
-        <RunTrace trace={runTrace} />
       </div>
 
       {/* Right / compare panel */}
@@ -337,38 +353,11 @@ export default function Chat({ settings }: ChatProps) {
             })}
             <div ref={compareMessagesEndRef} />
           </div>
-          <RunTrace trace={compareRunTrace} />
         </div>
       )}
     </div>
 
-    <div className="mb-2 grid gap-2 rounded-xl border border-white/10 bg-white/5 p-2 md:grid-cols-[220px_1fr]">
-      <label className="text-[11px] text-white/45">
-        Saved agent (optional)
-        <select
-          value={selectedAgentId}
-          onChange={(event) => {
-            setSelectedAgentId(event.target.value);
-            if (event.target.value) {
-              setCompareModelId(null);
-              setShowSearch(false);
-            }
-          }}
-          className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-900 p-2 text-xs text-white"
-        >
-          <option value="">Normal chat</option>
-          {savedAgents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
-        </select>
-      </label>
-      <div>
-        <p className="mb-1 text-[11px] text-white/45">
-          {selectedAgentId ? "Knowledge is fixed by the saved agent profile." : "Knowledge available to this chat"}
-        </p>
-        <KnowledgePicker selected={knowledgeBaseIds} onChange={setKnowledgeBaseIds} disabled={Boolean(selectedAgentId)} compact />
-      </div>
-    </div>
-
-    {!selectedAgentId && hfTokens.length > 0 && (
+    {hfTokens.length > 0 && (
       <select
         value={activeToken}
         onChange={(e) => setActiveToken(e.target.value)}
@@ -392,11 +381,11 @@ export default function Chat({ settings }: ChatProps) {
         }}
         className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-500 px-1 text-white"
         placeholder={compareModelId ? "Send to both models..." : "Type a message..."}
-        disabled={sending}
+        disabled={sending || conversationLoadState !== "idle"}
       />
       <button
         onClick={handleSend}
-        disabled={sending}
+        disabled={sending || conversationLoadState !== "idle"}
         className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-200 text-black hover:bg-teal-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {sending ? "Sending..." : "Send"}

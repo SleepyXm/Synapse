@@ -1,6 +1,6 @@
-import { useCallback } from "react";
 import { useUser } from "@/app/provider/UserProvider";
 import { addHfToken as apiAdd, deleteHfToken as apiDelete } from "@/app/handlers/tokens";
+import toast from "react-hot-toast";
 import { User } from "@/app/handlers/auth";
 
 export const useHfTokens = () => {
@@ -40,7 +40,7 @@ export const useHfTokens = () => {
     return updatedTokenNames;
   };
 
-  const listHfTokens = useCallback(() => user?.hf_token_names ?? [], [user]);
+  const listHfTokens = () => user?.hf_token_names ?? [];
 
   return {
     user,

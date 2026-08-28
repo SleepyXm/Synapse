@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "../provider/UserProvider";
 import { logout } from "../handlers/auth";
@@ -19,6 +20,9 @@ export default function Navbar() {
 
   const links = [
     { label: "Home", url: "/" },
+    { label: "Knowledge", url: "/knowledge" },
+    { label: "Guide", url: "/Bullshit" },
+    { label: "Stuff", url: "/alsobullshit" },
 
     // Prevent hydration mismatch by rendering the logged-out state
     // until the client-side auth check has finished.
@@ -26,8 +30,6 @@ export default function Navbar() {
       ? [{ label: "Sign in", url: "/login" }]
       : user
         ? [
-            { label: "Knowledge", url: "/knowledge" },
-            { label: "Agents", url: "/agents" },
             { label: "Profile", url: "/Profile" },
             { label: "Sign out", onClick: handleLogout },
           ]
@@ -35,10 +37,10 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-black/60 border-b border-white/10">
+    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-black/35 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-5 flex items-center justify-between">
         {/* Logo */}
-        <a href="" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <svg
             width="36"
             height="36"
@@ -79,7 +81,7 @@ export default function Navbar() {
               </text>
             </svg>
           </div>
-        </a>
+        </Link>
 
         {/* Desktop Links */}
         <nav>
@@ -87,12 +89,12 @@ export default function Navbar() {
             {links.map((link) => (
               <li key={link.label}>
                 {link.url ? (
-                  <a
+                  <Link
                     href={link.url}
                     className="hover:text-black transition-colors duration-300 px-4 py-2 rounded-full hover:bg-teal-300"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 ) : (
                   <button
                     onClick={link.onClick}
@@ -133,15 +135,17 @@ export default function Navbar() {
             {links.map((link) => (
               <li key={link.label}>
                 {link.url ? (
-                  <a
+                  <Link
                     href={link.url}
                     className="block w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5"
-                    onClick={() => setMobileOpen(false)}
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 ) : (
-                  <button onClick={link.onClick} className="w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5">
+                  <button
+                    onClick={link.onClick}
+                    className="w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5"
+                  >
                     {link.label}
                   </button>
                 )}

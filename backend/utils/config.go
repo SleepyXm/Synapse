@@ -27,8 +27,7 @@ func Load() {
 		FrontendProd:             requireEnv("FRONTEND_PROD"),
 		ResendAPIKey:             requireEnv("RESEND_API_KEY"),
 		RedisAddr:                requireEnv("REDIS_URL"),
-		RAGObjectRoot:            envOrDefault("RAG_OBJECT_ROOT", "./knowledge"),
-		RAGWorkerPollSeconds:     envIntOrDefault("RAG_WORKER_POLL_SECONDS", 2),
+		KnowledgeDir:             envOrDefault("KNOWLEDGE_DIR", "knowledge"),
 	}
 }
 

@@ -1,19 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useConversations,
+  emitNewConversationRequested,
   emitConversationSelected,
+  onConversationCreated,
   updateConversationTitle,
   deleteConversation,
 } from "../hooks/conversation";
 import Popup from "@/app/components/errorpopup";
+import JitterLoader from "@/app/components/JitterLoader";
 
 export default function Conversation() {
-  const { conversations, renameConversation, removeConversation } = useConversations();
+  const { conversations, loading, loadError, retry, renameConversation, removeConversation } = useConversations();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [showList, setShowList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => onConversationCreated((conversation) => {
+    setActiveConversationId(conversation.id);
+  }), []);
 
   const activeClass = (id: string) =>
     activeConversationId === id
@@ -50,7 +57,7 @@ export default function Conversation() {
 
   return (
     <div
-      className={`flex flex-col bg-black/60 backdrop-blur p-2 shadow-2xl
+      className={`flex flex-col bg-black/35 backdrop-blur p-2 shadow-2xl
         transition-all duration-300 h-[94vh] mt-20
         ${showList ? "w-[25vw]" : "w-0 overflow-hidden"}`}
     >
@@ -65,12 +72,31 @@ export default function Conversation() {
 
       {showList && (
         <>
+          <button
+            type="button"
+            className="mb-2 w-full rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-left text-sm font-semibold text-white transition hover:border-teal-300/60 hover:bg-teal-300/20"
+            onClick={() => {
+              setActiveConversationId(null);
+              setEditingId(null);
+              emitNewConversationRequested();
+            }}
+          >
+            + New chat
+          </button>
+
           <h3 className="text-sm font-bold text-white text-center mt-3 mb-3">
             Conversations
           </h3>
 
           <div className="flex flex-col gap-1 flex-1 overflow-y-auto">
-            {conversations.length === 0 ? (
+            {loading ? (
+              <JitterLoader message="Loading conversations…" className="min-h-24" />
+            ) : loadError ? (
+              <div role="alert" className="mt-2 rounded-lg border border-red-300/20 bg-red-300/5 p-3 text-center text-xs text-gray-300">
+                <p>Your conversations did not load.</p>
+                <button type="button" onClick={retry} className="mt-2 text-teal-300 hover:text-teal-200">Try again</button>
+              </div>
+            ) : conversations.length === 0 ? (
               <div className="text-[12px] text-gray-400 text-center mt-2">
                 No conversations yet
               </div>

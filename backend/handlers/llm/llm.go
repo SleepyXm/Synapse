@@ -1,48 +1,71 @@
 package handlers
 
 import (
+	"Synapse/structs"
+	"bufio"
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"Synapse/agents"
-	agenthandlers "Synapse/handlers/agents"
 	conversations "Synapse/handlers/conversations"
 	tokens "Synapse/handlers/tokens"
-	"Synapse/rag"
-	"Synapse/structs"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func generateTitle(hfToken, modelID, firstMessage string) string {
 	messages := []structs.LLMMessage{
-		{Role: "system", Content: "You are an assistant that creates short, descriptive titles for conversations."},
-		{Role: "user", Content: "Generate a short concise title for the following: " + firstMessage},
+		{
+			Role:    "system",
+			Content: "You are an assistant that creates short, descriptive titles for conversations.",
+		},
+		{
+			Role:    "user",
+			Content: "Generate a short concise title for the following: " + firstMessage,
+		},
 	}
+
 	maxTitleTokens := 12
-	payload, err := json.Marshal(structs.OpenAIRequest{Model: modelID, Messages: messages, Stream: false, MaxTokens: &maxTitleTokens})
+
+	payload, err := json.Marshal(structs.OpenAIRequest{
+		Model:     modelID,
+		Messages:  messages,
+		Stream:    false,
+		MaxTokens: &maxTitleTokens,
+	})
 	if err != nil {
 		return "Untitled Conversation"
 	}
-	request, err := http.NewRequest("POST", "https://router.huggingface.co/v1/chat/completions", bytes.NewBuffer(payload))
+
+	httpReq, err := http.NewRequest(
+		"POST",
+		"https://router.huggingface.co/v1/chat/completions",
+		bytes.NewBuffer(payload),
+	)
 	if err != nil {
 		return "Untitled Conversation"
 	}
-	request.Header.Set("Authorization", "Bearer "+hfToken)
-	request.Header.Set("Content-Type", "application/json")
-	response, err := (&http.Client{Timeout: 30 * time.Second}).Do(request)
+
+	httpReq.Header.Set("Authorization", "Bearer "+hfToken)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(httpReq)
 	if err != nil {
 		return "Untitled Conversation"
 	}
-	defer response.Body.Close()
-	if response.StatusCode < 200 || response.StatusCode >= 300 {
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "Untitled Conversation"
 	}
+
 	var result struct {
 		Choices []struct {
 			Message struct {
@@ -50,116 +73,215 @@ func generateTitle(hfToken, modelID, firstMessage string) string {
 			} `json:"message"`
 		} `json:"choices"`
 	}
-	if err := json.NewDecoder(response.Body).Decode(&result); err != nil || len(result.Choices) == 0 {
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return "Untitled Conversation"
 	}
-	title := strings.Trim(strings.TrimSpace(result.Choices[0].Message.Content), `"`)
-	if title == "" {
-		return "Untitled Conversation"
-	}
-	return title
-}
 
-func pointerValue(value *float64, fallback float64) float64 {
-	if value == nil {
-		return fallback
+	if len(result.Choices) > 0 {
+		title := strings.TrimSpace(result.Choices[0].Message.Content)
+		title = strings.Trim(title, `"`)
+		if title != "" {
+			return title
+		}
 	}
-	return *value
-}
 
-func ChatStream(db *sql.DB, runtime *agents.Runtime, knowledge rag.Repository, registry *agents.Registry) gin.HandlerFunc {
+	return "Untitled Conversation"
+}
+func ChatStream(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var request structs.KnowledgeChatRequest
-		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "invalid_request", "message": "conversation_id, input, model_id, and hf_token_name are required"}})
+		conversationID := c.Query("conversation_id")
+		if conversationID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "conversation_id required"})
 			return
 		}
-		request.Input = strings.TrimSpace(request.Input)
-		request.ModelID = strings.TrimSpace(request.ModelID)
-		request.HFTokenName = strings.TrimSpace(request.HFTokenName)
-		if request.Input == "" || request.ModelID == "" || request.HFTokenName == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "invalid_request", "message": "Input, model, and token name cannot be empty"}})
-			return
-		}
-		if _, err := uuid.Parse(request.ConversationID); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "invalid_conversation_id", "message": "Invalid conversation identifier"}})
-			return
-		}
+
 		userID := c.GetString("userID")
-		hfToken, err := tokens.GetDecryptedToken(db, userID, request.HFTokenName)
+
+		var req structs.ChatRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			return
+		}
+		// Conversation history belongs to the backend. The public chat endpoint
+		// accepts exactly one new user turn so clients cannot re-persist history or
+		// inject messages under privileged roles.
+		if len(req.Conversation) != 1 || req.Conversation[0].Role != "user" || strings.TrimSpace(req.Conversation[0].Content) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "conversation must contain exactly one non-empty user message"})
+			return
+		}
+
+		if strings.TrimSpace(req.HFTokenName) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "hfTokenName required"})
+			return
+		}
+
+		hfToken, err := tokens.GetDecryptedToken(db, userID, req.HFTokenName)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "credential_not_found", "message": "The selected Hugging Face token could not be loaded"}})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to load HF token"})
 			return
 		}
-		bases := make([]rag.KnowledgeBase, 0, len(request.KnowledgeBaseIDs))
-		for _, baseID := range request.KnowledgeBaseIDs {
-			if _, err := uuid.Parse(baseID); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "invalid_knowledge_id", "message": "Invalid knowledge-base identifier"}})
-				return
-			}
-			base, err := knowledge.GetKnowledgeBase(c, userID, baseID)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "knowledge_not_found", "message": "A selected knowledge base could not be loaded"}})
-				return
-			}
-			bases = append(bases, base)
-		}
-		manager := conversations.NewConversationManager(request.ConversationID, userID)
-		if err := manager.Load(db); err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"error": gin.H{"code": "conversation_forbidden", "message": "Conversation not found or unavailable"}})
-			return
-		}
-		history := manager.GetHistorySnapshot(20)
-		runtimeHistory := make([]agents.Message, 0, len(history))
-		for _, message := range history {
-			runtimeHistory = append(runtimeHistory, agents.Message{Role: message.Role, Content: message.Content})
-		}
-		maxTokens := 1024
-		if request.Settings.MaxTokens != nil {
-			maxTokens = *request.Settings.MaxTokens
-		}
-		toolIDs := []string{}
-		if len(bases) > 0 {
-			toolIDs = []string{agents.KnowledgeSearchToolID}
-		}
-		config := agents.RunConfig{
-			UserID: userID, ConversationID: request.ConversationID, Input: request.Input,
-			ModelID: request.ModelID, HFTokenName: request.HFTokenName,
-			Instructions: "Answer the user directly and accurately. Use attached knowledge when it can materially improve or support the answer.",
-			ToolIDs:      toolIDs, KnowledgeBases: bases, History: runtimeHistory,
-			Settings: agents.ModelSettings{
-				Temperature: pointerValue(request.Settings.Temperature, 0.7), TopP: pointerValue(request.Settings.TopP, 0.95),
-				MaxTokens: maxTokens, PresencePenalty: pointerValue(request.Settings.PresencePenalty, 0),
-				FrequencyPenalty: pointerValue(request.Settings.FrequencyPenalty, 0),
-			},
-			Limits: agents.Limits{MaxSteps: 6, TimeoutSeconds: 120},
-		}
-		if err := agents.ValidateRunConfig(config, registry); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "invalid_run", "message": err.Error()}})
-			return
-		}
-		manager.Append([]map[string]any{{"role": "user", "content": config.Input}})
-		if err := manager.Persist(db); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "conversation_save_failed", "message": "Could not save user message"}})
-			return
-		}
-		agenthandlers.PrepareSSE(c)
-		result, err := runtime.Run(c.Request.Context(), config, agenthandlers.SSEEmitter(c))
+		systemPrompt, err := ResolveSystemPrompt(db, userID, req.CustomisationID)
 		if err != nil {
+			if errors.Is(err, ErrCustomisationNotFound) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "customisation not found"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load customisation"})
+			}
 			return
 		}
-		manager.Append([]map[string]any{{"role": "assistant", "content": result.Output}})
-		_ = manager.Persist(db)
+
+		manager := conversations.NewConversationManager(conversationID, userID)
+		if err := manager.LoadOrCreate(c, db); err != nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
+
+		messages := manager.GetMemorySnapshot(20, systemPrompt)
+		for _, m := range req.Conversation {
+			messages = append(messages, structs.LLMMessage{
+				Role:    m.Role,
+				Content: m.Content,
+			})
+		}
+
+		newMessages := []map[string]any{}
+		for _, m := range req.Conversation {
+			newMessages = append(newMessages, map[string]any{
+				"role":    m.Role,
+				"content": m.Content,
+			})
+		}
+
+		manager.Append(newMessages)
+		if err := manager.Persist(c, db); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save conversation"})
+			return
+		}
+
+		payload, err := json.Marshal(structs.OpenAIRequest{
+			Model:            req.ModelID,
+			Messages:         messages,
+			Stream:           true,
+			MaxTokens:        req.Settings.MaxTokens,
+			Temperature:      req.Settings.Temperature,
+			TopP:             req.Settings.TopP,
+			PresencePenalty:  req.Settings.PresencePenalty,
+			FrequencyPenalty: req.Settings.FrequencyPenalty,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build payload"})
+			return
+		}
+
+		httpReq, err := http.NewRequestWithContext(
+			c.Request.Context(),
+			http.MethodPost,
+			"https://router.huggingface.co/v1/chat/completions",
+			bytes.NewBuffer(payload),
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+			return
+		}
+
+		httpReq.Header.Set("Authorization", "Bearer "+hfToken)
+		httpReq.Header.Set("Content-Type", "application/json")
+
+		httpClient := &http.Client{Timeout: 120 * time.Second}
+		resp, err := httpClient.Do(httpReq)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to reach LLM"})
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			var hfErr map[string]any
+			_ = json.NewDecoder(resp.Body).Decode(&hfErr)
+
+			c.JSON(resp.StatusCode, gin.H{
+				"error": "hugging face request failed",
+				"hf":    hfErr,
+			})
+			return
+		}
+
+		c.Header("Content-Type", "text/plain")
+		c.Header("Transfer-Encoding", "chunked")
+		c.Status(http.StatusOK)
+
+		var assistantContent strings.Builder
+		scanner := bufio.NewScanner(resp.Body)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			if line == "" || line == "data: [DONE]" {
+				continue
+			}
+
+			if strings.HasPrefix(line, "data: ") {
+				var chunk structs.StreamChunk
+				if err := json.Unmarshal([]byte(strings.TrimPrefix(line, "data: ")), &chunk); err != nil {
+					continue
+				}
+
+				if len(chunk.Choices) > 0 {
+					delta := chunk.Choices[0].Delta.Content
+					if delta != "" {
+						assistantContent.WriteString(delta)
+						fmt.Fprint(c.Writer, delta)
+						c.Writer.Flush()
+					}
+				}
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			log.Printf("stream scanner error: %v", err)
+		}
+
+		manager.Append([]map[string]any{
+			{"role": "assistant", "content": assistantContent.String()},
+		})
+		if err := manager.Persist(c, db); err != nil {
+			log.Printf("failed to save assistant response for conversation %s: %v", conversationID, err)
+		}
 
 		go func() {
 			var existingTitle *string
-			if err := db.QueryRow("SELECT title FROM conversations WHERE id = $1", request.ConversationID).Scan(&existingTitle); err != nil {
+			err := db.QueryRow(
+				"SELECT title FROM conversations WHERE id = $1",
+				conversationID,
+			).Scan(&existingTitle)
+
+			if err == nil && existingTitle != nil {
+				title := strings.TrimSpace(*existingTitle)
+				if title != "" && title != "New chat" {
+					return
+				}
+			}
+
+			firstMessage := ""
+			for _, m := range messages {
+				if m.Role == "user" {
+					firstMessage = m.Content
+					break
+				}
+			}
+
+			if firstMessage == "" {
 				return
 			}
-			if existingTitle != nil && strings.TrimSpace(*existingTitle) != "" {
-				return
-			}
-			_, _ = db.Exec("UPDATE conversations SET title = $1 WHERE id = $2", generateTitle(hfToken, request.ModelID, request.Input), request.ConversationID)
+
+			title := generateTitle(hfToken, req.ModelID, firstMessage)
+
+			_, _ = db.Exec(
+				"UPDATE conversations SET title = $1 WHERE id = $2",
+				title,
+				conversationID,
+			)
 		}()
 	}
 }

@@ -8,6 +8,7 @@ import { useState } from "react";
 
 export default function ChatPage() {
   const [settings, setSettings] = useState(DEFAULT_MODEL_SETTINGS);
+  const [customisationId, setCustomisationId] = useState("default");
 
  return (
       <div
@@ -19,9 +20,14 @@ export default function ChatPage() {
         ].join(" ")}
       >
         <Conversation />
-        <Chat settings={settings}/> 
+        <Chat settings={settings} customisationId={customisationId}/>
         
-        <Tooling settings={settings} setSettings={setSettings} />
+        <Tooling
+          settings={settings}
+          setSettings={setSettings}
+          customisationId={customisationId}
+          setCustomisationId={setCustomisationId}
+        />
       </div>
     )
   }

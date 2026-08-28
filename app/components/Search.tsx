@@ -79,7 +79,7 @@ export default function ModelExplorer() {
       {/* Search + Sort Controls */}
       <div className="mb-4 flex justify-center w-full px-2">
         <div
-          className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur p-2 shadow-2xl flex flex-col sm:flex-row gap-2 items-center w-full max-w-2xl focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
+          className="rounded-2xl border border-white/10 bg-black/35 backdrop-blur p-2 shadow-2xl flex flex-col sm:flex-row gap-2 items-center w-full max-w-2xl focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
           tabIndex={-1}
           onClick={(e) => {
             const input = e.currentTarget.querySelector(
@@ -136,7 +136,7 @@ export default function ModelExplorer() {
         {models.map((model) => (
           <div
             key={model.id}
-            className="flex flex-col border border-white/10 rounded-2xl bg-black/60 p-3 shadow-2xl hover:border-teal-400 transition ease-in-out duration-350"
+            className="flex flex-col border border-white/10 rounded-2xl bg-black/35 p-3 shadow-2xl hover:border-teal-400 transition ease-in-out duration-350"
           >
             <Image
               src={model.authorData.avatarUrl}

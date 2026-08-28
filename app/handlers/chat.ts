@@ -30,12 +30,42 @@ export interface ConversationMessages {
   llm_model: string,
 }
 
-export async function createConversation(title: string, modelId: string) {
-  const data = await request<{ id: string }>("/api/conversation/create", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, llm_model: modelId }),
-  });
+export interface LLMCustomisation {
+  id: string;
+  name: string;
+  system_prompt: string;
+  builtin: boolean;
+}
 
-  return data; // { id }
+export function createTemporaryConversation(modelId: string): Promise<ConversationItem> {
+  return request<ConversationItem>("/api/conversation/create", {
+    method: "POST",
+    body: JSON.stringify({ title: "New chat", llm_model: modelId }),
+  });
+}
+
+export async function getLLMCustomisations(): Promise<LLMCustomisation[]> {
+  const response = await request<{ customisations: LLMCustomisation[] }>(
+    "/api/llm/customisations",
+    { method: "GET" },
+  );
+  return response.customisations;
+}
+
+export function createLLMCustomisation(name: string, systemPrompt: string): Promise<LLMCustomisation> {
+  return request<LLMCustomisation>(
+    "/api/llm/customisations",
+    { method: "POST", body: JSON.stringify({ name, system_prompt: systemPrompt }) },
+  );
+}
+
+export function updateLLMCustomisation(id: string, name: string, systemPrompt: string): Promise<LLMCustomisation> {
+  return request<LLMCustomisation>(
+    `/api/llm/customisations/${id}`,
+    { method: "PATCH", body: JSON.stringify({ name, system_prompt: systemPrompt }) },
+  );
+}
+
+export function deleteLLMCustomisation(id: string): Promise<void> {
+  return request<void>(`/api/llm/customisations/${id}`, { method: "DELETE" });
 }

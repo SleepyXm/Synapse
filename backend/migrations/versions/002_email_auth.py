@@ -20,10 +20,7 @@ def upgrade() -> None:
     # Existing Synapse databases may already have the manually-added column.
     op.execute("ALTER TABLE public.users ADD COLUMN IF NOT EXISTS email VARCHAR(254)")
     op.execute("UPDATE public.users SET email = NULL WHERE email IS NOT NULL AND btrim(email) = ''")
-    op.execute(
-        "CREATE UNIQUE INDEX IF NOT EXISTS users_email_key "
-        "ON public.users (email) WHERE email IS NOT NULL"
-    )
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_key " "ON public.users (email) WHERE email IS NOT NULL")
 
 
 def downgrade() -> None:
