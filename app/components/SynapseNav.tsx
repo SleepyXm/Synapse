@@ -21,8 +21,6 @@ export default function Navbar() {
   const links = [
     { label: "Home", url: "/" },
     { label: "Knowledge", url: "/knowledge" },
-    { label: "Guide", url: "/Bullshit" },
-    { label: "Stuff", url: "/alsobullshit" },
 
     // Prevent hydration mismatch by rendering the logged-out state
     // until the client-side auth check has finished.
