@@ -12,6 +12,7 @@ import {
   uploadKnowledgeDocument,
 } from "@/app/components/handlers/knowledge";
 import { useUser } from "@/app/components/provider/UserProvider";
+import { Button, Input, Select, Surface, Textarea } from "@/app/UI";
 
 export default function KnowledgePage() {
   const { user } = useUser();
@@ -103,59 +104,59 @@ export default function KnowledgePage() {
       <h1 className="text-3xl font-semibold">Knowledge</h1>
       <p className="mt-2 text-sm text-white/60">Store private documents locally, embed them, and test retrieval before connecting them to chat.</p>
 
-      {message && <p className="mt-5 rounded-lg border border-white/10 bg-black/30 p-3 text-sm" aria-live="polite">{message}</p>}
+      {message && <Surface as="p" opacity={0.3} borderOpacity={0.1} radius="0.5rem" padding="0.75rem" className="mt-5 text-sm" aria-live="polite">{message}</Surface>}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <form onSubmit={createBase} className="space-y-3 rounded-xl border border-white/10 bg-black/35 p-5">
+        <Surface as="form" onSubmit={createBase} opacity={0.35} borderOpacity={0.1} radius="0.75rem" padding="1.25rem" className="space-y-3">
           <h2 className="text-lg font-semibold">Create a knowledge base</h2>
-          <input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Name" className="w-full rounded-lg bg-white/5 p-3" />
-          <textarea required maxLength={500} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Short description of this material" className="w-full rounded-lg bg-white/5 p-3" />
-          <input required value={form.embedding_model_id} onChange={(event) => setForm({ ...form, embedding_model_id: event.target.value })} placeholder="Embedding model ID" className="w-full rounded-lg bg-white/5 p-3" />
-          <select required value={form.hf_token_name} onChange={(event) => setForm({ ...form, hf_token_name: event.target.value })} className="w-full rounded-lg bg-neutral-900 p-3">
+          <Input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Name" />
+          <Textarea required maxLength={500} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Short description of this material" />
+          <Input required value={form.embedding_model_id} onChange={(event) => setForm({ ...form, embedding_model_id: event.target.value })} placeholder="Embedding model ID" />
+          <Select required tone="neutral" opacity={1} value={form.hf_token_name} onChange={(event) => setForm({ ...form, hf_token_name: event.target.value })}>
             <option value="">Select Hugging Face token</option>
             {user?.hf_token_names.map((name) => <option key={name} value={name}>{name}</option>)}
-          </select>
+          </Select>
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs text-white/60">Chunk size<input type="number" min={1} value={form.chunk_size_runes} onChange={(event) => setForm({ ...form, chunk_size_runes: Number(event.target.value) })} className="mt-1 w-full rounded-lg bg-white/5 p-3 text-white" /></label>
-            <label className="text-xs text-white/60">Overlap<input type="number" min={0} value={form.chunk_overlap_runes} onChange={(event) => setForm({ ...form, chunk_overlap_runes: Number(event.target.value) })} className="mt-1 w-full rounded-lg bg-white/5 p-3 text-white" /></label>
+            <label className="text-xs text-white/60">Chunk size<Input type="number" min={1} value={form.chunk_size_runes} onChange={(event) => setForm({ ...form, chunk_size_runes: Number(event.target.value) })} className="mt-1" /></label>
+            <label className="text-xs text-white/60">Overlap<Input type="number" min={0} value={form.chunk_overlap_runes} onChange={(event) => setForm({ ...form, chunk_overlap_runes: Number(event.target.value) })} className="mt-1" /></label>
           </div>
-          <button disabled={busy} className="w-full rounded-lg bg-teal-300 p-3 font-semibold text-black disabled:opacity-50">Create</button>
-        </form>
+          <Button type="submit" variant="primary" hover={false} disabled={busy} fullWidth padding="0.75rem" className="font-semibold">Create</Button>
+        </Surface>
 
-        <section className="space-y-4 rounded-xl border border-white/10 bg-black/35 p-5">
+        <Surface as="section" opacity={0.35} borderOpacity={0.1} radius="0.75rem" padding="1.25rem" className="space-y-4">
           <h2 className="text-lg font-semibold">Documents</h2>
-          <select value={selectedID} onChange={(event) => setSelectedID(event.target.value)} className="w-full rounded-lg bg-neutral-900 p-3">
+          <Select tone="neutral" opacity={1} value={selectedID} onChange={(event) => setSelectedID(event.target.value)}>
             <option value="">Select a knowledge base</option>
             {bases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
-          </select>
+          </Select>
           <input type="file" accept=".pdf,.md,.markdown,.txt,text/plain,text/markdown,application/pdf" onChange={(event) => setFile(event.target.files?.[0] || null)} className="block w-full text-sm text-white/70" />
-          <button type="button" onClick={upload} disabled={busy || !selectedID || !file} className="w-full rounded-lg bg-teal-300 p-3 font-semibold text-black disabled:opacity-50">Upload and embed</button>
+          <Button onClick={upload} variant="primary" hover={false} disabled={busy || !selectedID || !file} fullWidth padding="0.75rem" className="font-semibold">Upload and embed</Button>
           <div className="space-y-2">
             {documents.map((document) => (
-              <div key={document.id} className="rounded-lg bg-white/5 p-3 text-sm">
+              <Surface key={document.id} tone="light" opacity={0.05} radius="0.5rem" padding="0.75rem" className="text-sm">
                 <div className="flex justify-between gap-3"><span className="truncate">{document.filename}</span><span className="text-white/50">{document.status}</span></div>
                 {document.failure_reason && <p className="mt-1 text-red-300">{document.failure_reason}</p>}
-              </div>
+              </Surface>
             ))}
           </div>
-        </section>
+        </Surface>
       </div>
 
-      <section className="mt-6 rounded-xl border border-white/10 bg-black/35 p-5">
+      <Surface as="section" opacity={0.35} borderOpacity={0.1} radius="0.75rem" padding="1.25rem" className="mt-6">
         <h2 className="text-lg font-semibold">Test retrieval</h2>
         <form onSubmit={search} className="mt-3 flex gap-3">
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ask what these documents contain" className="min-w-0 flex-1 rounded-lg bg-white/5 p-3" />
-          <button disabled={busy || !selectedID} className="rounded-lg bg-teal-300 px-5 font-semibold text-black disabled:opacity-50">Search</button>
+          <Input fullWidth={false} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ask what these documents contain" className="min-w-0 flex-1" />
+          <Button type="submit" variant="primary" hover={false} disabled={busy || !selectedID} padding="0 1.25rem" className="font-semibold">Search</Button>
         </form>
         <div className="mt-4 space-y-3">
           {results.map((result) => (
-            <article key={result.citation_id} className="rounded-lg bg-white/5 p-4">
+            <Surface as="article" key={result.citation_id} tone="light" opacity={0.05} radius="0.5rem" padding="1rem">
               <p className="text-xs text-teal-200">{result.filename}{result.page ? ` · page ${result.page}` : ""} · score {result.score.toFixed(3)}</p>
               <p className="mt-2 whitespace-pre-wrap text-sm text-white/80">{result.content}</p>
-            </article>
+            </Surface>
           ))}
         </div>
-      </section>
+      </Surface>
     </main>
   );
 }

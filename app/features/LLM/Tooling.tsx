@@ -8,6 +8,7 @@ import {
   LLMCustomisation,
   updateLLMCustomisation,
 } from "@/app/components/handlers/chat";
+import { Button, Input, Surface, Textarea } from "@/app/UI";
 import { ModelSettings } from "@/app/components/hooks/interactive";
 
 type ToolingProps = {
@@ -99,9 +100,14 @@ export default function Tooling({
   };
 
   return (
-    <div
-      className="hidden md:flex flex-col bg-black/35 backdrop-blur p-4 shadow-2xl
-      transition-all duration-300 h-[94vh] mt-20 w-[25vw] overflow-y-auto"
+    <Surface
+      opacity={0.35}
+      blur="md"
+      padding="1rem"
+      shadow
+      width="25vw"
+      height="94vh"
+      className="hidden md:flex flex-col transition-all duration-300 mt-20 overflow-y-auto"
     >
       <h3 className="text-lg font-bold text-white text-center mb-4">Model Settings</h3>
 
@@ -133,15 +139,24 @@ export default function Tooling({
       </div>
 
       {showPrompts && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+        <Surface
+          opacity={0.7}
+          padding="1.5rem"
+          className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => setShowPrompts(false)}
         >
-          <div
+          <Surface
             role="dialog"
             aria-modal="true"
             aria-labelledby="prompt-dialog-title"
-            className="grid max-h-[80vh] w-full max-w-3xl grid-cols-2 overflow-hidden rounded-xl border border-white/15 bg-neutral-950 text-white shadow-2xl"
+            tone="deep"
+            opacity={1}
+            borderOpacity={0.15}
+            radius="0.75rem"
+            shadow
+            width="100%"
+            maxWidth="48rem"
+            className="grid max-h-[80vh] grid-cols-2 overflow-hidden text-white"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="overflow-y-auto border-r border-white/10 p-4">
@@ -181,41 +196,53 @@ export default function Tooling({
                 <button type="button" onClick={() => setShowPrompts(false)} aria-label="Close prompt manager" className="text-white/60 hover:text-white">✕</button>
               </div>
               <label className="mb-1 block text-xs text-white/60" htmlFor="prompt-name">Name</label>
-              <input
+              <Input
                 id="prompt-name"
                 value={name}
                 maxLength={100}
                 onChange={(event) => setName(event.target.value)}
-                className="mb-3 w-full rounded-lg border border-white/10 bg-white/5 p-2 text-sm outline-none focus:border-teal-300"
+                tone="light"
+                opacity={0.05}
+                borderOpacity={0.1}
+                focus="border"
+                padding="0.5rem"
+                className="mb-3 text-sm"
                 placeholder="Legal analyst"
               />
               <label className="mb-1 block text-xs text-white/60" htmlFor="system-prompt">Prompt</label>
-              <textarea
+              <Textarea
                 id="system-prompt"
                 value={systemPrompt}
                 maxLength={8000}
                 rows={12}
                 onChange={(event) => setSystemPrompt(event.target.value)}
-                className="w-full resize-y rounded-lg border border-white/10 bg-white/5 p-3 text-sm outline-none focus:border-teal-300"
+                tone="light"
+                opacity={0.05}
+                borderOpacity={0.1}
+                focus="border"
+                padding="0.75rem"
+                className="resize-y text-sm"
                 placeholder="Tell the model how it should behave…"
               />
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-xs text-white/40">{systemPrompt.length}/8000</span>
-                <button
+                <Button
                   type="button"
                   disabled={busy}
                   onClick={() => void savePrompt()}
-                  className="rounded-lg bg-teal-300 px-4 py-2 text-sm font-semibold text-black hover:bg-teal-200 disabled:opacity-50"
+                  variant="primary"
+                  padding="0.5rem 1rem"
+                  className="text-sm font-semibold"
                 >
                   {busy ? "Saving…" : editingId ? "Save changes" : "Save and use"}
-                </button>
+                </Button>
               </div>
               {error && <p className="mt-3 text-xs text-red-300" aria-live="polite">{error}</p>}
             </div>
-          </div>
-        </div>
+          </Surface>
+        </Surface>
       )}
-    </div>
+    </Surface>
   );
 }
 

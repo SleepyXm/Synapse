@@ -9,6 +9,7 @@ import {
 } from "@/app/components/hooks/conversation";
 import Popup from "@/app/UI/errorpopup";
 import JitterLoader from "@/app/UI/JitterLoader";
+import { Input, Surface } from "@/app/UI";
 
 export default function Conversation() {
   const { conversations, loading, loadError, retry, renameConversation, removeConversation } = useConversations();
@@ -21,11 +22,6 @@ export default function Conversation() {
   useEffect(() => onConversationCreated((conversation) => {
     setActiveConversationId(conversation.id);
   }), []);
-
-  const activeClass = (id: string) =>
-    activeConversationId === id
-      ? "bg-teal-300/20"
-      : "bg-black/30 hover:text-black hover:bg-teal-300";
 
   const handleEditStart = (id: string, currentTitle: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -56,10 +52,14 @@ export default function Conversation() {
   };
 
   return (
-    <div
-      className={`flex flex-col bg-black/35 backdrop-blur p-2 shadow-2xl
-        transition-all duration-300 h-[94vh] mt-20
-        ${showList ? "w-[25vw]" : "w-0 overflow-hidden"}`}
+    <Surface
+      opacity={0.35}
+      blur="md"
+      padding="0.5rem"
+      shadow
+      width={showList ? "25vw" : 0}
+      height="94vh"
+      className={`flex flex-col transition-all duration-300 mt-20 ${showList ? "" : "overflow-hidden"}`}
     >
       {error && <Popup message={error} onClose={() => setError("")} />}
 
@@ -102,9 +102,13 @@ export default function Conversation() {
               </div>
             ) : (
               conversations.map((conv) => (
-                <div
+                <Surface
                   key={conv.id}
-                  className={`rounded-lg text-white cursor-pointer transition flex items-center p-2 text-sm font-semibold group ${activeClass(conv.id)}`}
+                  tone={activeConversationId === conv.id ? "accent" : "dark"}
+                  opacity={activeConversationId === conv.id ? 0.2 : 0.3}
+                  radius="0.5rem"
+                  padding="0.5rem"
+                  className={`text-white cursor-pointer transition flex items-center text-sm font-semibold group ${activeConversationId === conv.id ? "" : "hover:text-black hover:bg-teal-300"}`}
                   onClick={() => {
                     if (editingId === conv.id) return;
                     setActiveConversationId(conv.id);
@@ -113,7 +117,7 @@ export default function Conversation() {
                 >
                   {editingId === conv.id ? (
                     <div className="flex items-center gap-1 w-full" onClick={e => e.stopPropagation()}>
-                      <input
+                      <Input
                         autoFocus
                         value={editTitle}
                         onChange={e => setEditTitle(e.target.value)}
@@ -121,7 +125,15 @@ export default function Conversation() {
                           if (e.key === "Enter") handleEditSave(conv.id);
                           if (e.key === "Escape") setEditingId(null);
                         }}
-                        className="flex-1 bg-white/10 text-white text-xs rounded px-2 py-1 outline-none focus:ring-1 focus:ring-teal-400 min-w-0"
+                        tone="light"
+                        opacity={0.1}
+                        radius="0.25rem"
+                        padding="0.25rem 0.5rem"
+                        focus="ring"
+                        focusWidth={1}
+                        focusOpacity={1}
+                        fullWidth={false}
+                        className="flex-1 text-xs min-w-0"
                       />
                       <button
                         onClick={() => handleEditSave(conv.id)}
@@ -157,12 +169,12 @@ export default function Conversation() {
                       </div>
                     </>
                   )}
-                </div>
+                </Surface>
               ))
             )}
           </div>
         </>
       )}
-    </div>
+    </Surface>
   );
 }

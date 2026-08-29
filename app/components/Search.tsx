@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Model } from "@/app/components/types/models";
 import Image from "next/image";
+import { Button, Input, Select, Surface, surfaceProps } from "@/app/UI";
 
 export default function ModelExplorer() {
   const [models, setModels] = useState<Model[]>([]);
@@ -64,13 +65,24 @@ export default function ModelExplorer() {
     }
   };
 
+  const explorerSurface = surfaceProps(
+    {
+      opacity: 0.2,
+      blur: "md",
+      radius: "1rem",
+      padding: "1rem",
+      shadow: true,
+    },
+    "overflow-hidden w-xl",
+    { width: "fit-content", maxWidth: "100%" },
+  );
+
   return (
     <motion.div
       tabIndex={0}
-      className="p-4 bg-black/20 backdrop-blur rounded-2xl shadow-2xl overflow-hidden w-xl"
+      {...explorerSurface}
       layout
       transition={{ duration: 0.2, ease: "easeInOut"}}
-      style={{ width: "fit-content", maxWidth: "100%" }}
     >
       <h2 className="text-xl font-bold mb-4 text-white text-center">
         Open-Source Model Finder
@@ -78,8 +90,16 @@ export default function ModelExplorer() {
 
       {/* Search + Sort Controls */}
       <div className="mb-4 flex justify-center w-full px-2">
-        <div
-          className="rounded-2xl border border-white/10 bg-black/35 backdrop-blur p-2 shadow-2xl flex flex-col sm:flex-row gap-2 items-center w-full max-w-2xl focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
+        <Surface
+          opacity={0.35}
+          borderOpacity={0.1}
+          blur="md"
+          radius="1rem"
+          padding="0.5rem"
+          shadow
+          width="100%"
+          maxWidth="42rem"
+          className="flex flex-col sm:flex-row gap-2 items-center focus-within:ring-2 focus-within:ring-emerald-400 ease-in-out duration-450"
           tabIndex={-1}
           onClick={(e) => {
             const input = e.currentTarget.querySelector(
@@ -88,28 +108,41 @@ export default function ModelExplorer() {
             input?.focus();
           }}
         >
-          <input
+          <Input
             type="text"
             placeholder="Search models..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400 text-white px-2 py-1 rounded-md w-full sm:w-auto"
+            tone="transparent"
+            radius="0.375rem"
+            padding="0.25rem 0.5rem"
+            fullWidth={false}
+            className="flex-1 text-sm placeholder:text-gray-400 w-full sm:w-auto"
           />
 
-          <select
+          <Select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="bg-black/40 border border-white/15 text-white text-sm rounded-md px-2 py-1 hover:border-white/25 transition w-full sm:w-auto"
+            tone="dark"
+            opacity={0.4}
+            borderOpacity={0.15}
+            radius="0.375rem"
+            padding="0.25rem 0.5rem"
+            fullWidth={false}
+            className="text-sm hover:border-white/25 transition w-full sm:w-auto"
           >
             <option value="trending">Trending</option>
             <option value="downloads">Downloads</option>
             <option value="likes">Likes</option>
             <option value="updated">Recently Updated</option>
-          </select>
+          </Select>
 
-          <button
+          <Button
             onClick={fetchModels}
-            className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-200 text-black hover:bg-teal-500 transition w-full sm:w-auto justify-center"
+            variant="action"
+            height="2.25rem"
+            padding="0 0.75rem"
+            className="w-full sm:w-auto"
           >
             Search
             <svg
@@ -126,17 +159,22 @@ export default function ModelExplorer() {
               <path d="M5 12h14"></path>
               <path d="m12 5 7 7-7 7"></path>
             </svg>
-          </button>
-        </div>
+          </Button>
+        </Surface>
       </div>
 
       {loading && <p>Loading models...</p>}
       {/* Grid of models */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {models.map((model) => (
-          <div
+          <Surface
             key={model.id}
-            className="flex flex-col border border-white/10 rounded-2xl bg-black/35 p-3 shadow-2xl hover:border-teal-400 transition ease-in-out duration-350"
+            opacity={0.35}
+            borderOpacity={0.1}
+            radius="1rem"
+            padding="0.75rem"
+            shadow
+            className="flex flex-col hover:border-teal-400 transition ease-in-out duration-350"
           >
             <Image
               src={model.authorData.avatarUrl}
@@ -172,7 +210,7 @@ export default function ModelExplorer() {
             <div className="text-sm text-gray-300 mb-1">
               Type: {model.pipeline_tag}
             </div>
-          </div>
+          </Surface>
         ))}
       </div>
     </motion.div>

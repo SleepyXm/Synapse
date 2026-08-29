@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signup, login } from "@/app/components/handlers/auth";
 import { useUser } from "@/app/components/provider/UserProvider";
 import Popup from "@/app/UI/errorpopup";
+import { Input } from "@/app/UI";
 
 export default function Auth() {
   const { setUser } = useUser();
@@ -138,13 +139,20 @@ export default function Auth() {
                               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                             </svg>
                           </div>
-                          <input
+                          <Input
                             type="text"
                             required
                             placeholder="Enter your username"
                             value={userName}
                             onChange={(e) => setUserName(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all duration-300"
+                            tone="light"
+                            opacity={0.1}
+                            borderOpacity={0.2}
+                            blur="sm"
+                            focus="ring"
+                            radius="0.75rem"
+                            padding="0.625rem 1rem 0.625rem 2.5rem"
+                            className="placeholder-white/50 transition-all duration-300"
                           />
                         </div>
                       </div>
@@ -161,13 +169,20 @@ export default function Auth() {
                             <path d="m22 7-10 6L2 7"></path>
                           </svg>
                         </div>
-                        <input
+                        <Input
                           type="email"
                           required
                           placeholder="you@example.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all duration-300"
+                          tone="light"
+                          opacity={0.1}
+                          borderOpacity={0.2}
+                          blur="sm"
+                          focus="ring"
+                          radius="0.75rem"
+                          padding="0.625rem 1rem 0.625rem 2.5rem"
+                          className="placeholder-white/50 transition-all duration-300"
                         />
                       </div>
                     </div>
@@ -204,13 +219,20 @@ export default function Auth() {
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                           </svg>
                         </div>
-                        <input
+                        <Input
                           type="password"
                           required
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full pl-10 pr-12 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all duration-300"
+                          tone="light"
+                          opacity={0.1}
+                          borderOpacity={0.2}
+                          blur="sm"
+                          focus="ring"
+                          radius="0.75rem"
+                          padding="0.625rem 3rem 0.625rem 2.5rem"
+                          className="placeholder-white/50 transition-all duration-300"
                         />
                       </div>
                     </div>
@@ -241,13 +263,20 @@ export default function Auth() {
                               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                             </svg>
                           </div>
-                          <input
+                          <Input
                             type="password"
                             required
                             placeholder="Re-enter your password"
                             value={password2}
                             onChange={(e) => setPassword2(e.target.value)}
-                            className="w-full pl-10 pr-12 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all duration-300"
+                            tone="light"
+                            opacity={0.1}
+                            borderOpacity={0.2}
+                            blur="sm"
+                            focus="ring"
+                            radius="0.75rem"
+                            padding="0.625rem 3rem 0.625rem 2.5rem"
+                            className="placeholder-white/50 transition-all duration-300"
                           />
                         </div>
                       </div>

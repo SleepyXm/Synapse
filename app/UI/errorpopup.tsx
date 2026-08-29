@@ -1,4 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { cx } from "@/app/UI/classnames";
+import styles from "@/app/UI/UI.module.css";
 
 type PopupProps = {
     message: string;
@@ -17,23 +19,7 @@ export default function Popup({ message, onClose, type = "error" }: PopupProps) 
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -80, opacity: 0 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          style={{
-            position: "fixed",
-            top: "10%",
-            left: "38.5%",
-            transform: "translateX(-50%)",
-            zIndex: 9999,
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            padding: "12px 16px",
-            borderRadius: "10px",
-            backgroundColor: isSuccess ? "#4caf8250" : "#e26161",
-            border: `1px solid ${isSuccess ? "#ffffff80" : "#ffffff80"}`,
-            color: "#ffffff",
-            backdropFilter: "blur(8px)",
-            
-          }}
+          className={cx(styles.popup, isSuccess ? styles.popupSuccess : styles.popupError)}
         >
           {isSuccess ? (
             <svg viewBox="0 0 100 100" width="24" height="36">
@@ -47,7 +33,7 @@ export default function Popup({ message, onClose, type = "error" }: PopupProps) 
               <circle cx="50" cy="75" r="3.5" fill="#cfcfcf" />
             </svg>
           )}
-          <div className="error-popup">
+          <div>
             <span>{message}</span>
             <button onClick={onClose}>✕</button>
           </div>

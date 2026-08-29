@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/components/provider/UserProvider";
 import { logout } from "@/app/components/handlers/auth";
+import { Surface } from "@/app/UI";
 
 export default function Navbar() {
   const { user, setUser, resolved } = useUser();
@@ -35,7 +36,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-black/35 border-b border-white/10">
+    <Surface as="header" opacity={0.35} borderOpacity={0.1} border="bottom" blur="lg" className="fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-5 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
@@ -129,7 +130,7 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {mobileOpen && (
-          <ul className="absolute top-full left-0 w-full bg-neutral-900/70 ring-1 ring-white/10 backdrop-blur p-4 md:hidden flex flex-col gap-2 text-sm font-medium text-white/60">
+          <Surface as="ul" tone="neutral" opacity={0.7} borderOpacity={0.1} blur="md" padding="1rem" width="100%" className="absolute top-full left-0 md:hidden flex flex-col gap-2 text-sm font-medium text-white/60">
             {links.map((link) => (
               <li key={link.label}>
                 {link.url ? (
@@ -149,9 +150,9 @@ export default function Navbar() {
                 )}
               </li>
             ))}
-          </ul>
+          </Surface>
         )}
       </div>
-    </header>
+    </Surface>
   );
 }

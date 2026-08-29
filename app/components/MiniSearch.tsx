@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Model } from "@/app/components/types/models";
+import { Input, Surface } from "@/app/UI";
 
 type MiniModelSearchProps = {
   onSelect: (modelId: string) => void;
@@ -44,18 +45,25 @@ export default function MiniModelSearch({ onSelect }: MiniModelSearchProps) {
 
   return (
     <div className="relative w-full">
-      <input
+      <Input
         type="text"
         value={searchTerm}
         onChange={handleChange}
         placeholder="Search a model to compare..."
-        className="w-full bg-white/10 border border-white/20 rounded-xl text-white text-sm placeholder:text-gray-500 px-3 py-2 outline-none focus:ring-2 focus:ring-teal-400/50 transition"
+        tone="light"
+        opacity={0.1}
+        borderOpacity={0.2}
+        radius="0.75rem"
+        padding="0.5rem 0.75rem"
+        focus="ring"
+        width="100%"
+        className="text-sm placeholder:text-gray-500 transition"
       />
       {loading && (
         <p className="text-xs text-gray-500 mt-1 px-1">Searching...</p>
       )}
       {models.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full bg-black/90 border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+        <Surface opacity={0.9} borderOpacity={0.1} radius="0.75rem" shadow width="100%" className="absolute z-50 mt-1 overflow-hidden">
           {models.map((model) => (
             <button
               key={model.id}
@@ -65,7 +73,7 @@ export default function MiniModelSearch({ onSelect }: MiniModelSearchProps) {
               {model.id}
             </button>
           ))}
-        </div>
+        </Surface>
       )}
     </div>
   );

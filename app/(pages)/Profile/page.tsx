@@ -1,23 +1,32 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { logout } from "@/app/components/handlers/auth";
-import { useState, useEffect } from "react";
-import { useUser } from "@/app/components/provider/UserProvider";
 import { addHfToken, deleteHfToken } from "@/app/components/handlers/tokens";
+import { useUser } from "@/app/components/provider/UserProvider";
+import { Button, Input, PropertyRow, Surface } from "@/app/UI";
+
+const profileTabs = [
+  ["account", "Account Info"],
+  ["models", "Models"],
+  ["sessions", "Sessions"],
+  ["billing", "Billing"],
+  ["data", "Data"],
+  ["personalization", "Personalization"],
+] as const;
+
+type ProfileTab = (typeof profileTabs)[number][0];
 
 export default function Profile() {
-  const [activeTab, setActiveTab] = useState("account");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("account");
   const { user } = useUser();
   const [hfTokenNames, setHfTokenNames] = useState<string[]>([]);
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenValue, setNewTokenValue] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [, setError] = useState("");
   const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-
+  useEffect(() => setHydrated(true), []);
   useEffect(() => {
     if (user?.hf_token_names) setHfTokenNames(user.hf_token_names);
   }, [user?.hf_token_names]);
@@ -25,328 +34,146 @@ export default function Profile() {
   if (!hydrated) return null;
   if (!user) return <div>Loading...</div>;
 
-  const { username, hf_token_names } = user;
+  const activeLabel = activeTab === "account"
+    ? "Account Information"
+    : profileTabs.find(([id]) => id === activeTab)?.[1] ?? "Account Information";
 
   return (
-    <div className="min-h-screen flex justify-center items-start pt-[10vh] relative">
-      <div className="w-[80%] h-[85vh] rounded-2xl border border-white/10 bg-black/35 backdrop-blur p-6 shadow-2xl flex gap-6">
-        <div className="w-48 flex flex-col items-center border-r border-white/10 pr-4 gap-6">
+    <main className="min-h-screen flex justify-center items-start pt-[10vh] relative">
+      <Surface
+        width="80%"
+        height="85vh"
+        opacity={0.35}
+        borderOpacity={0.1}
+        blur="md"
+        radius="1rem"
+        padding="1.5rem"
+        shadow
+        className="flex gap-6"
+      >
+        <aside className="w-48 flex flex-col items-center border-r border-white/10 pr-4 gap-6">
           <div className="flex flex-col items-center">
-            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-xl font-medium text-white">
-              {username ? username[0].toUpperCase() : "?"}
-            </div>
-            <div className="text-white text-sm mt-1">{username}</div>
+            <Surface tone="light" opacity={0.1} width="4rem" height="4rem" radius="999px" className="flex items-center justify-center text-xl font-medium text-white">
+              {user.username ? user.username[0].toUpperCase() : "?"}
+            </Surface>
+            <div className="text-white text-sm mt-1">{user.username}</div>
           </div>
 
-          <div className="flex flex-col w-full gap-2">
-            <button
-              className={`w-full px-4 py-2 text-left rounded-md ${
-                activeTab === "account"
-                  ? "bg-white/10 text-white font-semibold"
-                  : "text-white/50 hover:bg-white/5"
-              }`}
-              onClick={() => setActiveTab("account")}
-            >
-              Account Info
-            </button>
-            <button
-              className={`w-full px-4 py-2 text-left rounded-md ${
-                activeTab === "models"
-                  ? "bg-white/10 text-white font-semibold"
-                  : "text-white/50 hover:bg-white/5"
-              }`}
-              onClick={() => setActiveTab("models")}
-            >
-              Models
-            </button>
-            <button
-              className={`w-full px-4 py-2 text-left rounded-md ${
-                activeTab === "sessions"
-                  ? "bg-white/10 text-white font-semibold"
-                  : "text-white/50 hover:bg-white/5"
-              }`}
-              onClick={() => setActiveTab("sessions")}
-            >
-              Sessions
-            </button>
-            <button
-              className={`w-full px-4 py-2 text-left rounded-md ${
-                activeTab === "billing"
-                  ? "bg-white/10 text-white font-semibold"
-                  : "text-white/50 hover:bg-white/5"
-              }`}
-              onClick={() => setActiveTab("billing")}
-            >
-              Billing
-            </button>
-            <button
-              className={`w-full px-4 py-2 text-left rounded-md ${
-                activeTab === "data"
-                  ? "bg-white/10 text-white font-semibold"
-                  : "text-white/50 hover:bg-white/5"
-              }`}
-              onClick={() => setActiveTab("data")}
-            >
-              Data
-            </button>
+          <nav className="flex flex-col w-full gap-2">
+            {profileTabs.map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={`w-full px-4 py-2 text-left rounded-md ${
+                  activeTab === id
+                    ? "bg-white/10 text-white font-semibold"
+                    : "text-white/50 hover:bg-white/5"
+                }`}
+                onClick={() => setActiveTab(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
 
-            <button
-              className={`w-full px-4 py-2 text-left rounded-md ${
-                activeTab === "personalization"
-                  ? "bg-white/10 text-white font-semibold"
-                  : "text-white/50 hover:bg-white/5"
-              }`}
-              onClick={() => setActiveTab("personalization")}
-            >
-              Personalization
-            </button>
-          </div>
-
-          {/* Actions */}
           <div className="flex flex-col gap-2 mt-auto w-full">
-            <a
-              href="/settings"
-              className="w-full px-3 py-2 rounded-lg bg-white/5 text-white border border-white/10 text-center"
-            >
-              Settings
-            </a>
-            <button
-              onClick={() => logout()}
-              className="w-full px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-400 transition"
-            >
-              Log out
-            </button>
+            <a href="/settings" className="w-full px-3 py-2 rounded-lg bg-white/5 text-white border border-white/10 text-center">Settings</a>
+            <Button variant="danger" fullWidth padding="0.5rem 0.75rem" onClick={() => void logout()}>Log out</Button>
+          </div>
+        </aside>
+
+        <section className="flex-1 overflow-auto flex flex-col gap-4 text-white">
+          <h2 className="text-3xl font-semibold text-white mt-6">{activeLabel}</h2>
+
+          {activeTab === "account" ? (
+            <AccountDetails
+              username={user.username}
+              hfTokenNames={hfTokenNames}
+              newTokenName={newTokenName}
+              newTokenValue={newTokenValue}
+              setNewTokenName={setNewTokenName}
+              setNewTokenValue={setNewTokenValue}
+              setHfTokenNames={setHfTokenNames}
+              setError={setError}
+            />
+          ) : (
+            <ProfileSummary username={user.username} hfTokenNames={user.hf_token_names} />
+          )}
+        </section>
+      </Surface>
+    </main>
+  );
+}
+
+type AccountDetailsProps = {
+  username: string;
+  hfTokenNames: string[];
+  newTokenName: string;
+  newTokenValue: string;
+  setNewTokenName: (value: string) => void;
+  setNewTokenValue: (value: string) => void;
+  setHfTokenNames: React.Dispatch<React.SetStateAction<string[]>>;
+  setError: (value: string) => void;
+};
+
+function AccountDetails(props: AccountDetailsProps) {
+  const removeToken = async (name: string) => {
+    try {
+      await deleteHfToken(name);
+      props.setHfTokenNames((current) => current.filter((token) => token !== name));
+    } catch (error) {
+      props.setError(error instanceof Error ? error.message : "Failed to delete token");
+    }
+  };
+
+  const addToken = async () => {
+    if (!props.newTokenName.trim() || !props.newTokenValue.trim()) return;
+    try {
+      await addHfToken(props.newTokenName, props.newTokenValue);
+      props.setHfTokenNames((current) => [...current, props.newTokenName]);
+      props.setNewTokenName("");
+      props.setNewTokenValue("");
+    } catch (error) {
+      props.setError(error instanceof Error ? error.message : "Failed to add token");
+    }
+  };
+
+  return (
+    <>
+      <PropertyRow className="mt-[2%]"><span className="font-medium">Username:</span><span>{props.username}</span></PropertyRow>
+      <PropertyRow><span className="font-medium">Password:</span><span className="tracking-widest">••••••••</span></PropertyRow>
+      <PropertyRow><span className="font-medium">Email:</span></PropertyRow>
+
+      <Surface tone="light" opacity={0.05} radius="0.375rem" padding="0.75rem" className="flex flex-col gap-2 mt-4">
+        <span className="font-medium">HF Tokens:</span>
+        <div className="flex flex-col gap-1 max-w-full">
+          {props.hfTokenNames.length ? props.hfTokenNames.map((name) => (
+            <Surface key={name} tone="light" opacity={0.1} radius="0.375rem" padding="0.25rem" className="flex items-center justify-between">
+              <span className="truncate text-sm">{name}</span>
+              <button type="button" onClick={() => void removeToken(name)} className="text-red-500 hover:text-red-600 text-sm">Delete</button>
+            </Surface>
+          )) : <em className="text-gray-500 text-sm">No HF Tokens added</em>}
+        </div>
+
+        <div className="flex flex-col gap-2 mt-2">
+          <Input tone="light" opacity={0.1} radius="0.375rem" padding="0.25rem" focus="ring" focusWidth={1} focusOpacity={1} value={props.newTokenName} onChange={(event) => props.setNewTokenName(event.target.value)} placeholder="Token name (e.g. personal)" className="text-sm" />
+          <div className="flex items-center gap-2">
+            <Input type="password" tone="light" opacity={0.1} radius="0.375rem" padding="0.25rem" focus="ring" focusWidth={1} focusOpacity={1} fullWidth={false} value={props.newTokenValue} onChange={(event) => props.setNewTokenValue(event.target.value)} placeholder="hf_..." className="flex-1 text-sm" />
+            <button type="button" onClick={() => void addToken()} className="bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded-md text-white text-sm">Add</button>
           </div>
         </div>
+      </Surface>
+    </>
+  );
+}
 
-        <div className="flex-1 overflow-auto flex flex-col gap-4 text-white">
-          {activeTab === "account" && (
-            <>
-              <h2 className="text-3xl font-semibold text-white mt-6">
-                Account Information
-              </h2>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
-                <span className="font-medium">Username:</span>
-                <span>{user.username}</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Password:</span>
-                <span className="tracking-widest">••••••••</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Email:</span>
-              </div>
-
-              <div className="flex flex-col bg-white/5 p-3 rounded-md gap-2 mt-4">
-                <span className="font-medium">HF Tokens:</span>
-
-                <div className="flex flex-col gap-1 max-w-[100%]">
-                  {hfTokenNames.length ? (
-                    hfTokenNames.map((name) => (
-                      <div
-                        key={name}
-                        className="flex items-center justify-between bg-white/10 p-1 rounded-md"
-                      >
-                        <span className="truncate text-sm">{name}</span>
-                        <button
-                          onClick={async () => {
-                            try {
-                              await deleteHfToken(name);
-                              setHfTokenNames((prev) =>
-                                prev.filter((n) => n !== name),
-                              );
-                            } catch (err) {
-                              setError(
-                                err instanceof Error
-                                  ? err.message
-                                  : "Failed to delete token",
-                              );
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-600 text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <em className="text-gray-500 text-sm">
-                      No HF Tokens added
-                    </em>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2 mt-2">
-                  <input
-                    type="text"
-                    placeholder="Token name (e.g. personal)"
-                    className="bg-white/10 p-1 rounded-md text-white text-sm outline-none focus:ring-1 focus:ring-teal-400"
-                    value={newTokenName}
-                    onChange={(e) => setNewTokenName(e.target.value)}
-                  />
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="password"
-                      placeholder="hf_..."
-                      className="flex-1 bg-white/10 p-1 rounded-md text-white text-sm outline-none focus:ring-1 focus:ring-teal-400"
-                      value={newTokenValue}
-                      onChange={(e) => setNewTokenValue(e.target.value)}
-                    />
-                    <button
-                      onClick={async () => {
-                        if (!newTokenName.trim() || !newTokenValue.trim())
-                          return;
-                        try {
-                          await addHfToken(newTokenName, newTokenValue);
-                          setHfTokenNames((prev) => [...prev, newTokenName]);
-                          setNewTokenName("");
-                          setNewTokenValue("");
-                        } catch (err) {
-                          setError(
-                            err instanceof Error
-                              ? err.message
-                              : "Failed to add token",
-                          );
-                        }
-                      }}
-                      className="bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded-md text-white text-sm"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {activeTab === "models" && (
-            <>
-              <h2 className="text-3xl font-semibold text-white mt-6">Models</h2>
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
-                <span className="font-medium">Username:</span>
-                <span>{username}</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Password:</span>
-                <span className="tracking-widest">••••••••</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Email:</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token_names}</span>
-              </div>
-            </>
-          )}
-          {activeTab === "sessions" && (
-            <>
-              <h2 className="text-3xl font-semibold text-white mt-6">
-                Sessions
-              </h2>
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
-                <span className="font-medium">Username:</span>
-                <span>{username}</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Password:</span>
-                <span className="tracking-widest">••••••••</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Email:</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token_names}</span>
-              </div>
-            </>
-          )}
-          {activeTab === "billing" && (
-            <>
-              <h2 className="text-3xl font-semibold text-white mt-6">
-                Billing
-              </h2>
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
-                <span className="font-medium">Username:</span>
-                <span>{username}</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Password:</span>
-                <span className="tracking-widest">••••••••</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Email:</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token_names}</span>
-              </div>
-            </>
-          )}
-
-          {activeTab === "data" && (
-            <>
-              <h2 className="text-3xl font-semibold text-white mt-6">Data</h2>
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
-                <span className="font-medium">Username:</span>
-                <span>{username}</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Password:</span>
-                <span className="tracking-widest">••••••••</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Email:</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token_names}</span>
-              </div>
-            </>
-          )}
-
-          {activeTab === "personalization" && (
-            <>
-              <h2 className="text-3xl font-semibold text-white mt-6">
-                Personalization
-              </h2>
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md mt-[2%]">
-                <span className="font-medium">Username:</span>
-                <span>{username}</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Password:</span>
-                <span className="tracking-widest">••••••••</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">Email:</span>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 p-3 rounded-md">
-                <span className="font-medium">HF Token:</span>
-                <span className="truncate max-w-[60%]">{hf_token_names}</span>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+function ProfileSummary({ username, hfTokenNames }: { username: string; hfTokenNames: string[] }) {
+  return (
+    <>
+      <PropertyRow className="mt-[2%]"><span className="font-medium">Username:</span><span>{username}</span></PropertyRow>
+      <PropertyRow><span className="font-medium">Password:</span><span className="tracking-widest">••••••••</span></PropertyRow>
+      <PropertyRow><span className="font-medium">Email:</span></PropertyRow>
+      <PropertyRow><span className="font-medium">HF Token:</span><span className="truncate max-w-[60%]">{hfTokenNames}</span></PropertyRow>
+    </>
   );
 }

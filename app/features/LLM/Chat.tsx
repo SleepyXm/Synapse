@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import rehypeHighlight from "rehype-highlight";
-import ReactMarkdown from "react-markdown";
 import {
   handleFavClick,
   sendMessage,
@@ -19,6 +17,7 @@ import {
 import Popup from "@/app/UI/errorpopup";
 import MiniModelSearch from "../../components/MiniSearch";
 import JitterLoader from "../../UI/JitterLoader";
+import { Button, ChatMessage, Input, Select, Surface } from "@/app/UI";
 
 type ChatProps = {
   settings: ModelSettings;
@@ -221,7 +220,7 @@ export default function Chat({ settings, customisationId }: ChatProps) {
   };
 
   return (
-  <div className="bg-black/35 backdrop-blur p-2 flex flex-1 flex-col h-[94vh] mt-20">
+  <Surface opacity={0.35} blur="md" padding="0.5rem" height="94vh" className="flex flex-1 flex-col mt-20">
     {error && <Popup message={error} onClose={() => setError("")} />}
     {success && (
       <Popup message={success} onClose={() => setSuccess("")} type="success" />
@@ -295,24 +294,7 @@ export default function Chat({ settings, customisationId }: ChatProps) {
           ) : allMessages.map((m, i) => {
             const role = m.message?.role ?? m.role;
             const content = m.message?.content ?? m.content ?? "";
-            return (
-              <div
-                key={m.id ?? i}
-                className={`my-1 p-2 inline-block max-w-[70%] break-words mt-8 rounded-xl ${
-                  role === "user"
-                    ? "bg-teal-300/40 text-white ml-auto text-right"
-                    : "bg-white/0 text-white mr-auto text-left"
-                }`}
-              >
-                {role === "user" ? (
-                  <div className="whitespace-pre-wrap">{content}</div>
-                ) : (
-                  <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                    {content}
-                  </ReactMarkdown>
-                )}
-              </div>
-            );
+            return <ChatMessage key={m.id ?? i} role={role} content={content} />;
           })}
           <div ref={messagesEndRef} />
         </div>
@@ -332,24 +314,7 @@ export default function Chat({ settings, customisationId }: ChatProps) {
             {compareCurrentMessages.map((m, i) => {
               const role = m.role;
               const content = m.content ?? "";
-              return (
-                <div
-                  key={i}
-                  className={`my-1 p-2 inline-block max-w-[70%] break-words mt-8 rounded-xl ${
-                    role === "user"
-                      ? "bg-teal-300/40 text-white ml-auto text-right"
-                      : "bg-white/0 text-white mr-auto text-left"
-                  }`}
-                >
-                  {role === "user" ? (
-                    <div className="whitespace-pre-wrap">{content}</div>
-                  ) : (
-                    <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                      {content}
-                    </ReactMarkdown>
-                  )}
-                </div>
-              );
+              return <ChatMessage key={i} role={role} content={content} />;
             })}
             <div ref={compareMessagesEndRef} />
           </div>
@@ -358,35 +323,47 @@ export default function Chat({ settings, customisationId }: ChatProps) {
     </div>
 
     {hfTokens.length > 0 && (
-      <select
+      <Select
         value={activeToken}
         onChange={(e) => setActiveToken(e.target.value)}
-        className="bg-white/10 text-white p-1 rounded text-sm mb-2"
+        tone="light"
+        opacity={0.1}
+        radius="0.25rem"
+        padding="0.25rem"
+        fullWidth={false}
+        className="text-sm mb-2"
       >
         {hfTokens.map((t, i) => (
           <option key={i} value={t}>
             {t.slice(0, 10)}…
           </option>
         ))}
-      </select>
+      </Select>
     )}
 
-    <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/10">
-      <input
+    <Surface tone="light" opacity={0.05} borderOpacity={0.1} radius="0.75rem" padding="0.5rem" className="flex items-center gap-2">
+      <Input
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") handleSend();
         }}
-        className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-500 px-1 text-white"
+        tone="transparent"
+        radius="0"
+        padding="0 0.25rem"
+        fullWidth={false}
+        className="flex-1 text-sm placeholder:text-gray-500"
         placeholder={compareModelId ? "Send to both models..." : "Type a message..."}
         disabled={sending || conversationLoadState !== "idle"}
       />
-      <button
+      <Button
+        variant="action"
+        height="2.25rem"
+        padding="0 0.75rem"
         onClick={handleSend}
         disabled={sending || conversationLoadState !== "idle"}
-        className="inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-blue-200 text-black hover:bg-teal-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="disabled:cursor-not-allowed"
       >
         {sending ? "Sending..." : "Send"}
         <svg
@@ -404,14 +381,14 @@ export default function Chat({ settings, customisationId }: ChatProps) {
           <path d="M5 12h14"></path>
           <path d="m12 5 7 7-7 7"></path>
         </svg>
-      </button>
-    </div>
+      </Button>
+    </Surface>
 
     <div className="px-2 pb-2 mt-2">
       <p className="mt-2 text-[11px] text-gray-500">
         Tip: Press Enter to send
       </p>
     </div>
-  </div>
+  </Surface>
 );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import styles from "@/app/UI/UI.module.css";
 
 type Pulse = {
   x: number;
@@ -197,13 +198,13 @@ export default function NeuralGridBackground() {
   }, []);
 
   return (
-    <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-[#34383d]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(218,223,228,0.28),transparent_52%),linear-gradient(135deg,rgba(255,255,255,0.09),transparent_48%)]" />
+    <div aria-hidden="true" className={styles.neuralBackground}>
+      <div className={styles.neuralAmbient} />
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 h-full w-full [mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.5),black_8%,black_92%,rgba(0,0,0,0.55))]"
+        className={styles.neuralCanvas}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:100%_4px] opacity-30" />
+      <div className={styles.neuralScanlines} />
     </div>
   );
 }

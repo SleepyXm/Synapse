@@ -1,3 +1,6 @@
+import { cx } from "@/app/UI/classnames";
+import styles from "@/app/UI/UI.module.css";
+
 type JitterLoaderProps = {
   message: string;
   className?: string;
@@ -9,18 +12,18 @@ export default function JitterLoader({ message, className = "" }: JitterLoaderPr
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className={`flex flex-col items-center justify-center gap-3 text-gray-400 ${className}`}
+      className={cx(styles.loader, className)}
     >
-      <span aria-hidden="true" className="flex h-5 items-center gap-1">
+      <span aria-hidden="true" className={styles.loaderDots}>
         {[0, 1, 2].map((index) => (
           <span
             key={index}
-            className="h-2 w-2 animate-bounce rounded-sm bg-teal-300 motion-reduce:animate-none"
+            className={styles.loaderDot}
             style={{ animationDelay: `${index * 100}ms` }}
           />
         ))}
       </span>
-      <span className="text-xs">{message}</span>
+      <span className={styles.loaderMessage}>{message}</span>
     </div>
   );
 }
