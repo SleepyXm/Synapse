@@ -1,5 +1,5 @@
 import { addFavLLM } from "@/app/components/handlers/fav";
-import { Message, createTemporaryConversation } from "@/app/components/handlers/chat";
+import { KnowledgeCitation, Message, createTemporaryConversation } from "@/app/components/handlers/chat";
 import { fetchConversationMessages } from "./conversation";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
@@ -74,6 +74,7 @@ async function streamAssistantResponse(
   hfTokenName: string,
   settings: ModelSettings,
   customisationId: string,
+  knowledgeBaseId: string,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
 ) {
   const response = await fetch(`${API_BASE}/api/llm/chat/stream?conversation_id=${conversationId}`, {
@@ -82,7 +83,7 @@ async function streamAssistantResponse(
     credentials: "include",
     // The backend owns conversation memory. Only submit messages created by
     // this interaction so stored history is not duplicated on every request.
-    body: JSON.stringify({ modelId, hfTokenName, conversation: newMessages, settings, customisationId }),
+    body: JSON.stringify({ modelId, hfTokenName, conversation: newMessages, settings, customisationId, knowledgeBaseId }),
   });
 
   if (!response.ok) {
@@ -91,6 +92,17 @@ async function streamAssistantResponse(
   }
 
   if (!response.body) throw new Error("No response body");
+
+  let citations: KnowledgeCitation[] = [];
+  const encodedCitations = response.headers.get("X-Synapse-Citations");
+  if (encodedCitations) {
+    try {
+      const padded = encodedCitations.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(encodedCitations.length / 4) * 4, "=");
+      citations = JSON.parse(atob(padded)) as KnowledgeCitation[];
+    } catch {
+      citations = [];
+    }
+  }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -120,8 +132,13 @@ async function streamAssistantResponse(
         const lastMsg = newMessages[newMessages.length - 1];
         if (lastMsg?.role === "assistant") {
           lastMsg.content = partial;
+          lastMsg.metadata = citations.length ? { citations, knowledge_base_id: knowledgeBaseId } : undefined;
         } else {
-          newMessages.push({ role: "assistant", content: partial });
+          newMessages.push({
+            role: "assistant",
+            content: partial,
+            metadata: citations.length ? { citations, knowledge_base_id: knowledgeBaseId } : undefined,
+          });
         }
         return newMessages;
       });
@@ -139,8 +156,9 @@ export const sendMessage = async (args: {
   hfTokenName: string;
   settings: ModelSettings;
   customisationId: string;
+  knowledgeBaseId: string;
 }) => {
-  const { input, setInput, setMessages, currentConversationId, setCurrentConversationId, modelId, hfTokenName, settings, customisationId } = args;
+  const { input, setInput, setMessages, currentConversationId, setCurrentConversationId, modelId, hfTokenName, settings, customisationId, knowledgeBaseId } = args;
   if (!input.trim()) return;
 
   const conversationId = await ensureConversation(currentConversationId, setCurrentConversationId, setMessages, modelId);
@@ -148,5 +166,5 @@ export const sendMessage = async (args: {
   const userMessage = appendUserMessage(input, setInput, setMessages);
 
 
-  await streamAssistantResponse(conversationId, [userMessage], modelId, hfTokenName, settings, customisationId, setMessages);
+  await streamAssistantResponse(conversationId, [userMessage], modelId, hfTokenName, settings, customisationId, knowledgeBaseId, setMessages);
 };

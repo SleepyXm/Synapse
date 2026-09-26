@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/app/components/provider/UserProvider";
 import { logout } from "@/app/components/handlers/auth";
 import { Surface } from "@/app/UI";
@@ -11,6 +11,7 @@ export default function Navbar() {
   const { user, setUser, resolved } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = async () => {
     await logout();
@@ -29,7 +30,7 @@ export default function Navbar() {
       ? [{ label: "Sign in", url: "/login" }]
       : user
         ? [
-            { label: "Profile", url: "/Profile" },
+            { label: "Profile", url: "/profile" },
             { label: "Sign out", onClick: handleLogout },
           ]
         : [{ label: "Sign in", url: "/login" }]),
@@ -90,7 +91,8 @@ export default function Navbar() {
                 {link.url ? (
                   <Link
                     href={link.url}
-                    className="hover:text-black transition-colors duration-300 px-4 py-2 rounded-full hover:bg-teal-300"
+                    aria-current={pathname === link.url ? "page" : undefined}
+                    className={`transition-colors duration-300 px-4 py-2 rounded-full hover:bg-teal-300 hover:text-black ${pathname === link.url ? "bg-teal-300 text-black" : ""}`}
                   >
                     {link.label}
                   </Link>
@@ -136,7 +138,8 @@ export default function Navbar() {
                 {link.url ? (
                   <Link
                     href={link.url}
-                    className="block w-full text-left hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5"
+                    aria-current={pathname === link.url ? "page" : undefined}
+                    className={`block w-full rounded-full px-4 py-2 text-left transition-colors duration-300 hover:bg-teal-300 hover:text-black ${pathname === link.url ? "bg-teal-300 text-black" : ""}`}
                   >
                     {link.label}
                   </Link>

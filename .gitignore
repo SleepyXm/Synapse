@@ -42,6 +42,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local RAG corpus (keep private source documents out of git)
-/backend/knowledge/*
-!/backend/knowledge/.gitkeep
+# Local RAG corpus. Application code lives in backend/knowledge; private source
+# documents live under backend/var and must never be committed.
+/backend/var/knowledge/*
+!/backend/var/knowledge/.gitkeep
+/backend/var/tokenizers/
+/backend/libtokenizers/
+/backend/:memory:.ses
+/:memory:.ses

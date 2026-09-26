@@ -15,6 +15,9 @@ type Config struct {
 	ResendAPIKey             string
 	RedisAddr                string
 	KnowledgeDir             string
+	KnowledgeServiceURL      string
+	KnowledgeServiceToken    string
+	TokenizerCacheDir        string
 }
 
 type Claims struct {

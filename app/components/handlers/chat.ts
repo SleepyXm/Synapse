@@ -9,7 +9,19 @@ export interface Message {
     content: string;
   };
   created_at?: string;   // optional for API messages
+  metadata?: {
+    citations?: KnowledgeCitation[];
+    knowledge_base_id?: string;
+  };
 }
+
+export type KnowledgeCitation = {
+  citation_id: string;
+  document_id: string;
+  filename: string;
+  page: number | null;
+  chunk_index: number;
+};
 
 export interface ChatContextType {
   currentConversationId: string | null;

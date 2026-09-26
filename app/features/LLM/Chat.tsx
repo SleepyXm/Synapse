@@ -18,6 +18,7 @@ import Popup from "@/app/UI/errorpopup";
 import MiniModelSearch from "../../components/MiniSearch";
 import JitterLoader from "../../UI/JitterLoader";
 import { Button, ChatMessage, Input, Select, Surface } from "@/app/UI";
+import { KnowledgeBase, listKnowledgeBases } from "@/app/components/handlers/knowledge";
 
 type ChatProps = {
   settings: ModelSettings;
@@ -71,6 +72,8 @@ export default function Chat({ settings, customisationId }: ChatProps) {
 
   const [hfTokens, setHfTokens] = useState<string[]>([]);
   const [activeToken, setActiveToken] = useState<string | undefined>(undefined);
+  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
+  const [knowledgeBaseId, setKnowledgeBaseId] = useState("");
 
   const [currentConversationId, setCurrentConversationId] = useState<
     string | null
@@ -97,6 +100,10 @@ export default function Chat({ settings, customisationId }: ChatProps) {
     setHfTokens(tokens);
     setActiveToken((prev) => prev ?? tokens[0]);
   }, [listHfTokens]);
+
+  useEffect(() => {
+    listKnowledgeBases().then(setKnowledgeBases).catch(() => setKnowledgeBases([]));
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onConversationSelected(async (id) => {
@@ -178,10 +185,12 @@ export default function Chat({ settings, customisationId }: ChatProps) {
           hfTokenName: activeToken,
           settings,
           customisationId,
+          knowledgeBaseId,
         }),
       ];
 
-      if (compareModelId) {
+      // Knowledge-grounded turns make exactly one user-paid generation call.
+      if (compareModelId && !knowledgeBaseId) {
         sends.push(
           sendMessage({
             input,
@@ -193,6 +202,7 @@ export default function Chat({ settings, customisationId }: ChatProps) {
             hfTokenName: activeToken,
             settings,
             customisationId,
+            knowledgeBaseId,
           }),
         );
       }
@@ -243,12 +253,13 @@ export default function Chat({ settings, customisationId }: ChatProps) {
         {isFav ? "★" : "☆"}
       </button>
       <button
+        disabled={Boolean(knowledgeBaseId)}
         onClick={() =>
           compareModelId
             ? setCompareModelId(null)
             : setShowSearch((prev) => !prev)
         }
-        className="text-xs px-2 py-1 rounded-lg bg-white/10 hover:bg-teal-500/30 text-gray-300 hover:text-white transition"
+        className="text-xs px-2 py-1 rounded-lg bg-white/10 hover:bg-teal-500/30 text-gray-300 hover:text-white transition disabled:cursor-not-allowed disabled:opacity-40"
       >
         {compareModelId ? "✕ Stop comparing" : "Compare"}
       </button>
@@ -294,7 +305,7 @@ export default function Chat({ settings, customisationId }: ChatProps) {
           ) : allMessages.map((m, i) => {
             const role = m.message?.role ?? m.role;
             const content = m.message?.content ?? m.content ?? "";
-            return <ChatMessage key={m.id ?? i} role={role} content={content} />;
+            return <ChatMessage key={m.id ?? i} role={role} content={content} citations={m.metadata?.citations} />;
           })}
           <div ref={messagesEndRef} />
         </div>
@@ -314,7 +325,7 @@ export default function Chat({ settings, customisationId }: ChatProps) {
             {compareCurrentMessages.map((m, i) => {
               const role = m.role;
               const content = m.content ?? "";
-              return <ChatMessage key={i} role={role} content={content} />;
+              return <ChatMessage key={i} role={role} content={content} citations={m.metadata?.citations} />;
             })}
             <div ref={compareMessagesEndRef} />
           </div>
@@ -322,24 +333,46 @@ export default function Chat({ settings, customisationId }: ChatProps) {
       )}
     </div>
 
-    {hfTokens.length > 0 && (
+    <div className="mb-2 flex gap-2">
+      {hfTokens.length > 0 && (
+        <Select
+          value={activeToken}
+          onChange={(e) => setActiveToken(e.target.value)}
+          tone="light"
+          opacity={0.1}
+          radius="0.25rem"
+          padding="0.25rem"
+          fullWidth={false}
+          className="text-sm"
+        >
+          {hfTokens.map((t, i) => (
+            <option key={i} value={t}>
+              {t.slice(0, 10)}…
+            </option>
+          ))}
+        </Select>
+      )}
       <Select
-        value={activeToken}
-        onChange={(e) => setActiveToken(e.target.value)}
+        aria-label="Knowledge base"
+        value={knowledgeBaseId}
+        onChange={(event) => {
+          setKnowledgeBaseId(event.target.value);
+          if (event.target.value) {
+            setCompareModelId(null);
+            setShowSearch(false);
+          }
+        }}
         tone="light"
         opacity={0.1}
         radius="0.25rem"
         padding="0.25rem"
         fullWidth={false}
-        className="text-sm mb-2"
+        className="min-w-0 text-sm"
       >
-        {hfTokens.map((t, i) => (
-          <option key={i} value={t}>
-            {t.slice(0, 10)}…
-          </option>
-        ))}
+        <option value="">No knowledge base</option>
+        {knowledgeBases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
       </Select>
-    )}
+    </div>
 
     <Surface tone="light" opacity={0.05} borderOpacity={0.1} radius="0.75rem" padding="0.5rem" className="flex items-center gap-2">
       <Input

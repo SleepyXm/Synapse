@@ -7,7 +7,10 @@ import { jetBrainsMono } from "./assets/fonts";
 
 
 export const metadata: Metadata = {
-  title: "Synapse",
+  title: {
+    default: "Synapse",
+    template: "%s | Synapse",
+  },
   description: "Let your minds flow.",
 };
 

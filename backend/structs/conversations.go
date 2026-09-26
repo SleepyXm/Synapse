@@ -23,6 +23,7 @@ type ChatRequest struct {
 	ModelID         string `json:"modelId" binding:"required"`
 	HFTokenName     string `json:"hfTokenName"`
 	CustomisationID string `json:"customisationId"`
+	KnowledgeBaseID string `json:"knowledgeBaseId"`
 	// Conversation contains only messages created by the current interaction.
 	// Stored history is loaded and bounded by the backend.
 	Conversation []Message     `json:"conversation" binding:"required"`

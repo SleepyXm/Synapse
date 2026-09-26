@@ -54,6 +54,7 @@ func main() {
 		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"X-Synapse-Citations"},
 		AllowCredentials: true,
 	}))
 
@@ -63,6 +64,7 @@ func main() {
 	routes.RegisterConversationRoutes(api.Group("/conversation"), db)
 	routes.RegisterTokenRoutes(api.Group("/tokens"), db)
 	routes.RegisterFavoriteRoutes(api.Group("/user"), db)
+	routes.RegisterKnowledgeRoutes(api.Group("/knowledge-bases"), db)
 
 	router.Run(":8000")
 }

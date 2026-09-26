@@ -21,7 +21,7 @@ Bring your own Hugging Face API token. Tokens are stored against your profile an
 
 ## Stack
 
-`Go` `Next.js` `PostgreSQL` `AWS EC2`
+`Go` `Next.js` `PostgreSQL` `Qdrant` `Docling` `Hugging Face TEI` `AWS EC2`
 
 The Next.js interface communicates with the Go API for authentication, conversations, model requests, and token management.
 
@@ -30,15 +30,35 @@ The Next.js interface communicates with the Go API for authentication, conversat
 ## Requirements
 - Hugging Face account with API token
 
-## Document preparation status
+## Knowledge service
 
-`backend/rag` contains the first active backend foundation for document ingestion:
+Private PDF, Markdown, and text documents are ingested by a separate Go service.
+Docling produces small layout-aware evidence regions and TEI embeds every region for
+semantic community selection. Only after every document in a frozen indexing
+generation has its dense regions does FastEmbed create a paired BM25 vector for each
+region. Qdrant activates the generation once both stages are complete. PostgreSQL
+stores only ownership and stage state; development originals and region manifests
+remain under the gitignored `backend/var/knowledge` directory.
 
-- LangChainGo recursive text chunking with explicit rune-based size settings.
-- Batched Hugging Face feature-extraction requests.
-- Source and embedding-model identity on prepared chunks.
+At retrieval time, dense search selects every region above its calibrated threshold.
+BM25 searches only those region IDs and applies its own threshold. An empty dense or
+sparse set returns no evidence; there is no whole-base fallback, verifier, score
+fusion, query-time model loop, or reranker.
 
-This is not yet a complete RAG feature. There is currently no document parser, vector store, retrieval policy, chat grounding, or frontend document workflow.
+Indexing and retrieval use service-owned models rather than the user's Hugging
+Face token. The main API uses the selected answer model's tokenizer to cap
+evidence at 1,000 tokens before its single paid generation call. Start Qdrant,
+TEI, and the processor with `compose.knowledge.yaml`, apply Alembic,
+then run `go run ./cmd/knowledge-service` from `backend`.
+Changing either retrieval model requires a new index version, new dense and
+sparse collection names, and re-ingestion; incompatible vectors are not mixed.
+See [`V0.1-Metrics.md`](V0.1-Metrics.md) for the smoke, expanded, and lexical-only comparisons.
+
+The Go API links the real Hugging Face tokenizer runtime. Download the matching
+`libtokenizers` v1.27.0 archive from the
+[release page](https://github.com/daulet/tokenizers/releases/tag/v1.27.0) and point
+`CGO_LDFLAGS` at the directory containing `libtokenizers.a` when building or
+testing the API.
 
 
 ---

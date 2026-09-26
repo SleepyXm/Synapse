@@ -27,7 +27,10 @@ func Load() {
 		FrontendProd:             requireEnv("FRONTEND_PROD"),
 		ResendAPIKey:             requireEnv("RESEND_API_KEY"),
 		RedisAddr:                requireEnv("REDIS_URL"),
-		KnowledgeDir:             envOrDefault("KNOWLEDGE_DIR", "knowledge"),
+		KnowledgeDir:             envOrDefault("KNOWLEDGE_DIR", "var/knowledge"),
+		KnowledgeServiceURL:      envOrDefault("KNOWLEDGE_SERVICE_URL", "http://localhost:8090"),
+		KnowledgeServiceToken:    os.Getenv("KNOWLEDGE_SERVICE_TOKEN"),
+		TokenizerCacheDir:        envOrDefault("KNOWLEDGE_TOKENIZER_CACHE", "var/tokenizers"),
 	}
 }
 

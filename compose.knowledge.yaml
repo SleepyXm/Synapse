@@ -1,0 +1,38 @@
+name: synapse-knowledge
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  embeddings:
+    # Override TEI_IMAGE with cpu-1.9 on an x86_64 host. This default matches
+    # the Apple Silicon development machine used by this repository.
+    image: ${TEI_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest@sha256:35c50d7494de22deecdb783b8f5b7e1d05765709bd90071b03469b9440d28656}
+    command: ["--model-id", "${EMBED_MODEL:-BAAI/bge-small-en-v1.5}", "--port", "80"]
+    ports:
+      - "8081:80"
+    volumes:
+      - tei_model_cache:/data
+    restart: unless-stopped
+
+  processor:
+    build: ./backend/knowledge-processor
+    environment:
+      EMBED_MODEL: ${EMBED_MODEL:-BAAI/bge-small-en-v1.5}
+      KNOWLEDGE_REGION_MAX_TOKENS: "${KNOWLEDGE_REGION_MAX_TOKENS:-128}"
+    ports:
+      - "5001:5001"
+    volumes:
+      - processor_model_cache:/root/.cache
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  tei_model_cache:
+  processor_model_cache:

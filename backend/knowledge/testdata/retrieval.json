@@ -1,0 +1,85 @@
+{
+  "calibration": {
+    "dense_model": "BAAI/bge-small-en-v1.5",
+    "sparse_model": "Qdrant/bm25",
+    "dense_threshold": 0.55,
+    "sparse_threshold": 12.5,
+    "lowest_relevant_dense": 0.6351,
+    "highest_irrelevant_dense": 0.6702,
+    "lowest_relevant_sparse": 8.3689,
+    "highest_irrelevant_sparse": 13.3379
+  },
+  "documents": [
+    {
+      "id": "project",
+      "chunks": [
+        "Alice owns retrieval. Bob maintains the document ingestion worker.",
+        "The next architecture review is scheduled for 6 September 2026."
+      ]
+    },
+    {
+      "id": "leave",
+      "chunks": [
+        "Full-time employees receive 25 days of annual leave per calendar year.",
+        "Managers must approve leave, and at most five unused days carry into the next year."
+      ]
+    },
+    {
+      "id": "bread",
+      "chunks": [
+        "Proof the dough for 60 minutes, until it has roughly doubled in size.",
+        "Bake the loaf at 220 degrees Celsius for 30 minutes."
+      ]
+    }
+  ],
+  "queries": [
+    {"text": "Who owns retrieval?", "document": "project", "chunk": 0},
+    {"text": "When is the architecture review?", "document": "project", "chunk": 1},
+    {"text": "How many annual leave days do employees receive?", "document": "leave", "chunk": 0},
+    {"text": "How long should I bake the loaf?", "document": "bread", "chunk": 1},
+    {"text": "What is the quarterly revenue forecast?", "document": null, "chunk": null}
+  ],
+  "blind_evaluation": {
+    "rules": {
+      "top_source": "The first returned chunk must come from expected_document.",
+      "answer_hit": "At least one returned chunk from expected_document must contain one of must_contain_any.",
+      "unanswerable": "A null expected_document must return zero chunks.",
+      "threshold_policy": "Do not change prompts or thresholds after observing results."
+    },
+    "documents": [
+      {"path": "README.md", "filename": "README.md"},
+      {"path": "AGENTS.md", "filename": "AGENTS.md"},
+      {"path": "EXPERIMENTAL.md", "filename": "EXPERIMENTAL.md"},
+      {"path": "app/UI/README.md", "filename": "UI-README.md"},
+      {"path": "backend/requirements.txt", "filename": "backend-requirements.txt"},
+      {"path": "backend/knowledge-processor/requirements.txt", "filename": "processor-requirements.txt"},
+      {"path": "LICENSE", "filename": "LICENSE.md"}
+    ],
+    "queries": [
+      {"query": "Which external model hub do users supply their own credentials for?", "expected_document": "README.md", "must_contain_any": ["Hugging Face", "BYOK"]},
+      {"query": "What backend language and frontend framework make up Synapse?", "expected_document": "README.md", "must_contain_any": ["Go", "Next.js"]},
+      {"query": "Where are raw document bodies explicitly forbidden from being stored?", "expected_document": "AGENTS.md", "must_contain_any": ["PostgreSQL", "Never store document bodies"]},
+      {"query": "When is sparse indexing allowed to start for a frozen generation?", "expected_document": "AGENTS.md", "must_contain_any": ["every document", "Sparse work cannot begin"]},
+      {"query": "What happens when dense semantic search returns no evidence regions?", "expected_document": "EXPERIMENTAL.md", "must_contain_any": ["no accepted evidence", "empty set"]},
+      {"query": "Which identifier restricts BM25 search to the dense result set?", "expected_document": "EXPERIMENTAL.md", "must_contain_any": ["region_id"]},
+      {"query": "Which component owns translucent backgrounds in the shared UI?", "expected_document": "UI-README.md", "must_contain_any": ["Surface"]},
+      {"query": "When should Tailwind still be used instead of promoting a UI primitive?", "expected_document": "UI-README.md", "must_contain_any": ["one-off layout", "responsive composition"]},
+      {"query": "Which package supplies BM25 embeddings, and what exact version is pinned?", "expected_document": "processor-requirements.txt", "must_contain_any": ["fastembed==0.8.0"]},
+      {"query": "Which major SQLAlchemy release range does the backend require?", "expected_document": "backend-requirements.txt", "must_contain_any": ["SQLAlchemy>=2.0,<3"]},
+      {"query": "What must a modified network application offer remote users under section 13?", "expected_document": "LICENSE.md", "must_contain_any": ["Corresponding Source", "network server at no charge"]},
+      {"query": "May a distributor charge money for verbatim program copies?", "expected_document": "LICENSE.md", "must_contain_any": ["charge any price"]},
+      {"query": "How many days of annual leave do employees receive?", "expected_document": null, "must_contain_any": []},
+      {"query": "Who is Alice's direct manager?", "expected_document": null, "must_contain_any": []},
+      {"query": "What is the company's quarterly revenue forecast?", "expected_document": null, "must_contain_any": []},
+      {"query": "Which health insurer covers dental surgery?", "expected_document": null, "must_contain_any": []},
+      {"query": "Who challenged plague theory?", "expected_document": null, "must_contain_any": []},
+      {"query": "When does the customer contract renew?", "expected_document": null, "must_contain_any": []},
+      {"query": "What is the office emergency evacuation route?", "expected_document": null, "must_contain_any": []},
+      {"query": "Which supplier provides the database servers?", "expected_document": null, "must_contain_any": []},
+      {"query": "What dosage was prescribed to the patient?", "expected_document": null, "must_contain_any": []},
+      {"query": "Where is the signed acquisition agreement stored?", "expected_document": null, "must_contain_any": []},
+      {"query": "What refund did the customer receive?", "expected_document": null, "must_contain_any": []},
+      {"query": "When is the next board meeting?", "expected_document": null, "must_contain_any": []}
+    ]
+  }
+}

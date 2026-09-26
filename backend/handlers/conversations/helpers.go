@@ -133,14 +133,22 @@ func (cm *ConversationManager) LoadOrCreate(ctx context.Context, db *sql.DB) err
 }
 
 func (cm *ConversationManager) Append(newMessages []map[string]any) {
+	cm.AppendWithMetadata(newMessages, nil)
+}
+
+func (cm *ConversationManager) AppendWithMetadata(newMessages []map[string]any, metadata map[string]any) {
 	for _, m := range newMessages {
 		role, _ := m["role"].(string)
+		messageMetadata := map[string]any{}
+		for key, value := range metadata {
+			messageMetadata[key] = value
+		}
 		cm.Messages = append(cm.Messages, structs.StoredMessage{
 			ID:        uuid.New().String(),
 			Message:   m,
 			Role:      role,
 			CreatedAt: structs.FlexTime{},
-			Metadata:  map[string]any{},
+			Metadata:  messageMetadata,
 		})
 	}
 }

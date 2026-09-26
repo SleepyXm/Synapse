@@ -1,0 +1,13 @@
+.env
+.env.*
+.DS_Store
+**/.DS_Store
+libtokenizers/
+tmp/
+var/
+.venv/
+**/__pycache__/
+*.pyc
+*.test
+*.out
+synapsergo
